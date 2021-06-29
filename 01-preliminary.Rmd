@@ -1,0 +1,72 @@
+---
+title: "Looking for CDI Bias"
+author: "Nathan & George"
+date: "6/29/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=F}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(wordbankr)
+library(tidyverse)
+library(ggrepel)
+library(mirt) # requires package loading, not just referencing. 
+library(mirtCAT)
+library(here)
+library(kableExtra)
+library(gridExtra)
+library(printr)
+#library(parallel)
+#library(doParallel)
+#library(mclust)
+#library(Rtsne)
+#library(factoextra)
+```
+
+First, let's get some wordbank data for American English.
+
+```{r get-wordbank-data, echo=T}
+get_instruments()
+
+d_demo <- 
+  get_administration_data(language = "English (American)", form = "WG") #%>%
+  #bind_rows(get_administration_data(language = "English (American)", form = "WS"))
+
+table(d_demo$age)
+table(d_demo$mom_ed)
+
+sum(is.na(d_demo$mom_ed)) # many missing
+
+```
+
+We have data from `r nrow(d_demo)` children for the WG form.
+<!-- writing reminder -->
+
+```{r get-wordbank-items}
+d_long_wg <- get_instrument_data(language="English (American)", form = "WG") %>%
+  mutate(produces = as.numeric(value == "produces")) # we'll start with production
+# yes = understands; no = does not understand/produce, produces = produces (and understands)
+
+d_mat <- d_long_wg %>% select(data_id, num_item_id, produces) %>% # ToDo: filter out non-word items here
+  pivot_wider(id_cols = data_id, names_from = num_item_id, values_from = produces)
+
+
+en_wg <- get_item_data(language="English (American)", form="WG") %>%
+  filter(type=="word")
+
+table(en_wg$category)
+```
+
+# DIF Analysis with mirt
+
+```{r}
+# https://rdrr.io/cran/mirt/man/DIF.html
+
+mirt(d_mat, 1, "2PL")
+
+# eventually: DIF(multigroupmodel based on sex or mom_ed)
+```
+
