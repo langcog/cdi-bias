@@ -72,7 +72,8 @@ save(d_mat, d_demo, en_wg, file=here("data/en_wg.Rdata"))
 # load saved CDI:WG data
 load(here("data/en_wg.Rdata")) # d_demo, d_mat, en_wg (items)
 
-d_demo <- d_demo %>% filter(production!=0) %>%
+d_demo <- d_demo %>% 
+  filter(production!=0, !is.na(sex)) %>% # can't fit children not producing words, or with NA sex in group model
   arrange(data_id)
 
 # there are more IDs in d_mat than in d_demo; remove those
@@ -108,10 +109,11 @@ save(file = here("data/eng_wg_mod_2pl.Rds"), "m1", "coefs_2pl") # "fscores_2pl",
 # https://rdrr.io/cran/mirt/man/DIF.html
 # https://rdrr.io/cran/mirt/man/multipleGroup.html
 
-sex_group = d_demo$sex
+sex_group = as.character(d_demo$sex)
 
-mg1 <- multipleGroup(dat, model = 1, group = sex_group, verbose = FALSE) 
-mg2 <- multipleGroup(dat, model = 1, group = sex_group, 
+# mg1 <- multipleGroup(d_mat, model = 1, group = sex_group, verbose = FALSE) 
+# Error: Multiple Group model will not be identified without proper constraints (groups contain missing data patterns where item responses have been completely omitted or, alternatively, the number of categories within each group is not equal to the total number of categories)
+mg2 <- multipleGroup(d_mat, model = 1, group = sex_group, 
                      invariance = 'slopes', verbose = FALSE)
 
 anova(mg2, mg1)
