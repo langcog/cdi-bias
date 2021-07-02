@@ -113,9 +113,26 @@ sex_group = as.character(d_demo$sex)
 
 # mg1 <- multipleGroup(d_mat, model = 1, group = sex_group, verbose = FALSE) 
 # Error: Multiple Group model will not be identified without proper constraints (groups contain missing data patterns where item responses have been completely omitted or, alternatively, the number of categories within each group is not equal to the total number of categories)
-mg2 <- multipleGroup(d_mat, model = 1, group = sex_group, 
-                     invariance = 'slopes', verbose = FALSE)
+mg2 <- multipleGroup(d_mat, model = 1, group = sex_group, technical=list(NCYCLES=1000), 
+                     invariance = 'slopes', verbose = T)
 
-anova(mg2, mg1)
+m_sc2 <- multipleGroup(d_mat, 1, group = sex_group,
+                             invariance=c('slopes', 'intercepts', 'free_var','free_means'))
+mod_sc1 <- multipleGroup(d_mat, 1, group = sex_group,  #fixed means
+                             invariance=c('slopes', 'intercepts', 'free_var'))
+mod_fullconstrain <- multipleGroup(d_mat, 1, group = sex_group,
+                             invariance=c('slopes', 'intercepts'))
+
+extract.mirt(mod_fullconstrain, 'time') #time of estimation components
+
+save(file = here("data/eng_wg_sex_slopes_invariant.Rds"), mg2)
+
+anova(m1, mg2) # AIC prefers group model, BIC prefers 2PL
+mg2s <- summary(mg2)
+fem = mg2s[[1]]$rotF
+mal = mg2s[[2]]$rotF
+
+plot(x=fem, y=mal) # slopes are constrained to be the same...
+# where are the difficulties? 
 ```
 
