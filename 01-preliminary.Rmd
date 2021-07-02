@@ -1,7 +1,7 @@
 ---
 title: "Looking for CDI Bias"
-author: "Nathan & George"
-date: "6/29/2021"
+author: "Nathan, George, and Mike"
+date: "`Sys.Date()`"
 output:
   pdf_document: default
   html_document: default
@@ -9,13 +9,11 @@ output:
 
 ```{r setup, include=F}
 knitr::opts_chunk$set(echo = FALSE)
-# new libraries GK
-# new line
+
 library(wordbankr)
 library(tidyverse)
 library(ggrepel)
-library(mirt) # requires package loading, not just referencing. 
-library(mirtCAT)
+library(mirt) 
 library(here)
 library(kableExtra)
 library(gridExtra)
@@ -27,48 +25,95 @@ library(printr)
 #library(factoextra)
 ```
 
-First, let's get some wordbank data for American English.
+First, let's get some wordbank data for American English. We'll start with production data from the CDI: Words & Gestures (WG) form.
+We'll look for DIF based on 1) sex and 2) SES (high vs. low). 
+Questions: How do we choose a dozen anchor items (that we expect to be unbiased)?
 
-```{r get-wordbank-data, echo=T}
-get_instruments()
+```{r get-wordbank-data, eval=F, echo=F}
+# Run Once
+#get_instruments()
 
 d_demo <- 
   get_administration_data(language = "English (American)", form = "WG") #%>%
   #bind_rows(get_administration_data(language = "English (American)", form = "WS"))
 
+# 8-18 month-olds
 table(d_demo$age)
-table(d_demo$mom_ed)
 
-sum(is.na(d_demo$mom_ed)) # many missing
+# mother's years of education = proxy for SES
+table(d_demo$mom_ed)
+# skewed: only 72 with Primary/Some Secondary (most have Some College +)
+
+#sum(is.na(d_demo$mom_ed)) # many mom_ed missing
 
 ```
 
-We have data from `r nrow(d_demo)` children for the WG form.
-<!-- writing reminder -->
-
-```{r get-wordbank-items}
+```{r get-wordbank-items, eval=F, echo=F}
 d_long_wg <- get_instrument_data(language="English (American)", form = "WG") %>%
   mutate(produces = as.numeric(value == "produces")) # we'll start with production
 # yes = understands; no = does not understand/produce, produces = produces (and understands)
 
-d_mat <- d_long_wg %>% select(data_id, num_item_id, produces) %>% # ToDo: filter out non-word items here
-  pivot_wider(id_cols = data_id, names_from = num_item_id, values_from = produces)
-
-
 en_wg <- get_item_data(language="English (American)", form="WG") %>%
-  filter(type=="word")
+  filter(type=="word") %>% select(-complexity_category, -item_id)
+
+# subjects not producing any words yet (can't fit model with them)
+bad_Ss = d_demo[which(d_demo$production==0),]$data_id
+
+d_long_wg <- d_long_wg %>% left_join(en_wg %>% select(num_item_id, definition)) %>%
+  filter(!is.na(definition))
+
+d_mat <- d_long_wg %>% select(data_id, definition, produces) %>% 
+  pivot_wider(id_cols = data_id, names_from = definition, values_from = produces)
+
+save(d_mat, d_demo, en_wg, file=here("data/en_wg.Rdata"))
+```
+
+```{r load-data}
+# load saved CDI:WG data
+load(here("data/en_wg.Rdata")) # d_demo, d_mat, en_wg (items)
+
+d_demo <- d_demo %>% filter(production!=0) %>%
+  arrange(data_id)
+
+# there are more IDs in d_mat than in d_demo; remove those
+d_mat <- d_mat %>% filter(is.element(data_id, d_demo$data_id)) %>% arrange(data_id)
+
+sids = d_mat$data_id
+d_mat$data_id = NULL
+d_mat = data.matrix(d_mat)
+row.names(d_mat) = sids
 
 table(en_wg$category)
 ```
 
-# DIF Analysis with mirt
+We have data from `r nrow(d_demo)` children for the WG form.
+
+## Fit baseline 2PL model
+
+```{r}
+m1 <- mirt(d_mat, 1, "2PL", 
+           technical=list(NCYCLES=1000))
+
+coefs_2pl <- as_tibble(coef(m1, simplify = TRUE)$items) %>%
+  mutate(definition = rownames(coef(m1, simplify = TRUE)$items))
+fscores_2pl <- tibble(data_id = rownames(d_mat), 
+                             ability = fscores(m1, method = "MAP")[,1])
+
+save(file = here("data/eng_wg_mod_2pl.Rds"), "m1", "coefs_2pl") # "fscores_2pl",
+```
+
+# DIF Model: Sex
 
 ```{r}
 # https://rdrr.io/cran/mirt/man/DIF.html
+# https://rdrr.io/cran/mirt/man/multipleGroup.html
 
-mirt(d_mat, 1, "2PL")
+sex_group = d_demo$sex
 
-# eventually: DIF(multigroupmodel based on sex or mom_ed)
+mg1 <- multipleGroup(dat, model = 1, group = sex_group, verbose = FALSE) 
+mg2 <- multipleGroup(dat, model = 1, group = sex_group, 
+                     invariance = 'slopes', verbose = FALSE)
+
+anova(mg2, mg1)
 ```
 
-Test
