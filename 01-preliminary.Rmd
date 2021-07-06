@@ -93,7 +93,7 @@ We have data from `r nrow(d_demo)` children for the WG form.
 
 ```{r}
 m1 <- mirt(d_mat, 1, "2PL", 
-           technical=list(NCYCLES=1000))
+           technical=list(NCYCLES=500))
 
 coefs_2pl <- as_tibble(coef(m1, simplify = TRUE)$items) %>%
   mutate(definition = rownames(coef(m1, simplify = TRUE)$items))
@@ -111,10 +111,15 @@ save(file = here("data/eng_wg_mod_2pl.Rds"), "m1", "coefs_2pl") # "fscores_2pl",
 
 sex_group = as.character(d_demo$sex)
 
-# mg1 <- multipleGroup(d_mat, model = 1, group = sex_group, verbose = FALSE) 
+# ToDo: define ses_group ("high" for mom_ed > X, "low") (choose X ..high school?)
+
+mg1 <- multipleGroup(d_mat, 1, group = sex_group, SE = T) 
 # Error: Multiple Group model will not be identified without proper constraints (groups contain missing data patterns where item responses have been completely omitted or, alternatively, the number of categories within each group is not equal to the total number of categories)
 mg2 <- multipleGroup(d_mat, model = 1, group = sex_group, technical=list(NCYCLES=1000), 
                      invariance = 'slopes', verbose = T)
+
+
+DIF(mg2, c('d')) # No hyper-parameters were estimated in the DIF model. For effective DIF testing, freeing the focal group hyper-parameters is recommended.
 
 m_sc2 <- multipleGroup(d_mat, 1, group = sex_group,
                              invariance=c('slopes', 'intercepts', 'free_var','free_means'))
@@ -125,7 +130,25 @@ mod_fullconstrain <- multipleGroup(d_mat, 1, group = sex_group,
 
 extract.mirt(mod_fullconstrain, 'time') #time of estimation components
 
+residuals(mod_sc1)
+
 save(file = here("data/eng_wg_sex_slopes_invariant.Rds"), mg2)
+
+Mit = as_tibble(coef(mg2, simplify=T)$Male$items) %>%
+  mutate(definition = rownames(coef(mg2, simplify=T)$Male$items)) %>%
+  select(-g, -u) %>% 
+  rename(d_m = d)
+Fit = as_tibble(coef(mg2, simplify=T)$Female$items) %>%
+  mutate(definition = rownames(coef(mg2, simplify=T)$Female$items)) %>%
+  select(-g, -u) %>%
+  rename(d_f = d)
+
+combo <- Mit %>% left_join(Fit) %>%
+  mutate(d_diff = d_f - d_m,
+         d_diff_abs = abs(d_diff)) 
+
+thresh = median(combo$d_diff_abs) + sd(combo$d_diff_abs)
+
 
 anova(m1, mg2) # AIC prefers group model, BIC prefers 2PL
 mg2s <- summary(mg2)
