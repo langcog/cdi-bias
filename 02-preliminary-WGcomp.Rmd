@@ -1,0 +1,199 @@
+---
+title: "Looking for CDI Bias: WG Comprehension"
+author: "Nathan, George, and Mike"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=F}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(wordbankr)
+library(tidyverse)
+library(ggrepel)
+library(mirt) 
+library(here)
+#library(kableExtra)
+library(gridExtra)
+library(printr)
+#library(parallel)
+#library(doParallel)
+#library(mclust)
+#library(Rtsne)
+#library(factoextra)
+```
+
+First, let's get some wordbank data for American English. We'll start with production data from the CDI: Words & Gestures (WG) form.
+We'll look for DIF based on 1) sex and 2) SES (high vs. low). 
+Questions: How do we choose a dozen anchor items (that we expect to be unbiased)?
+
+```{r get-wordbank-data, eval=F, echo=F}
+# Run Once
+#get_instruments()
+
+d_demo <- 
+  get_administration_data(language = "English (American)", form = "WG") #%>%
+  #bind_rows(get_administration_data(language = "English (American)", form = "WS"))
+
+# 8-18 month-olds
+table(d_demo$age)
+
+# mother's years of education = proxy for SES
+table(d_demo$mom_ed)
+# skewed: only 72 with Primary/Some Secondary (most have Some College +)
+
+#sum(is.na(d_demo$mom_ed)) # many mom_ed missing
+
+```
+
+Let's do comprehension data.
+
+```{r get-wordbank-items, eval=F, echo=F}
+d_long_wg <- get_instrument_data(language="English (American)", form = "WG") %>%
+  mutate(produces = as.numeric(value == "yes" | value == "produces")) # we'll start with production
+# yes = understands; no = does not understand/produce, produces = produces (and understands)
+
+en_wg <- get_item_data(language="English (American)", form="WG") %>%
+  filter(type=="word") %>% select(-complexity_category, -item_id)
+
+# subjects not producing any words yet (can't fit model with them)
+bad_Ss = d_demo[which(d_demo$production==0),]$data_id
+
+d_long_wg <- d_long_wg %>% left_join(en_wg %>% select(num_item_id, definition)) %>%
+  filter(!is.na(definition))
+
+d_mat <- d_long_wg %>% select(data_id, definition, produces) %>% 
+  pivot_wider(id_cols = data_id, names_from = definition, values_from = produces)
+
+save(d_mat, d_demo, en_wg, file=here("data/en_wg_comp.Rdata"))
+```
+
+```{r load-data}
+# load saved CDI:WG data
+load(here("data/en_wg_comp.Rdata")) # d_demo, d_mat, en_wg (items)
+
+d_demo <- d_demo %>% 
+  filter(production!=0, !is.na(sex)) %>% # can't fit children not producing words, or with NA sex in group model
+  arrange(data_id)
+
+# there are more IDs in d_mat than in d_demo; remove those
+d_mat <- d_mat %>% filter(is.element(data_id, d_demo$data_id)) %>% arrange(data_id)
+
+sids = d_mat$data_id
+d_mat$data_id = NULL
+d_mat = data.matrix(d_mat)
+row.names(d_mat) = sids
+
+table(en_wg$category)
+```
+
+We have data from `r nrow(d_demo)` children for the WG form.
+
+## Fit baseline 2PL model
+
+```{r, eval=F}
+m1 <- mirt(d_mat, 1, "2PL", 
+           technical=list(NCYCLES=500))
+
+coefs_2pl <- as_tibble(coef(m1, simplify = TRUE)$items) %>%
+  mutate(definition = rownames(coef(m1, simplify = TRUE)$items))
+fscores_2pl <- tibble(data_id = rownames(d_mat), 
+                             ability = fscores(m1, method = "MAP")[,1])
+
+save(file = here("data/eng_wg_comp_mod_2pl.Rds"), "m1", "coefs_2pl") # "fscores_2pl",
+```
+
+# DIF Model: Sex
+
+```{r, eval=F}
+# https://rdrr.io/cran/mirt/man/DIF.html
+# https://rdrr.io/cran/mirt/man/multipleGroup.html
+
+sex_group = as.character(d_demo$sex)
+
+# ToDo: define ses_group ("high" for mom_ed > X, "low") (choose X ..high school?)
+
+mg1 <- multipleGroup(d_mat, 1, group = sex_group, SE = T) 
+# Error: Multiple Group model will not be identified without proper constraints (groups contain missing data patterns where item responses have been completely omitted or, alternatively, the number of categories within each group is not equal to the total number of categories)
+mg2 <- multipleGroup(d_mat, model = 1, group = sex_group, technical=list(NCYCLES=1000), 
+                     invariance = 'slopes', verbose = T)
+
+
+DIF(mg2, c('d')) # No hyper-parameters were estimated in the DIF model. For effective DIF testing, freeing the focal group hyper-parameters is recommended.
+
+m_sc2 <- multipleGroup(d_mat, 1, group = sex_group,
+                       invariance=c('slopes', 'intercepts', 'free_var','free_means'))
+mod_sc1 <- multipleGroup(d_mat, 1, group = sex_group,  #fixed means
+                             invariance=c('slopes', 'intercepts', 'free_var'))
+mod_fullconstrain <- multipleGroup(d_mat, 1, group = sex_group,
+                             invariance=c('slopes', 'intercepts'))
+
+extract.mirt(mod_fullconstrain, 'time') #time of estimation components
+
+residuals(mod_sc1)
+
+save(file = here("data/eng_wg_comp_sex_sexDIF.Rds"), 
+     mg2, m_sc2, mod_sc1, mod_fullconstrain)
+```
+
+```{r}
+load(here("data/eng_wg_comp_sex_sexDIF.Rds"))
+load(here("data/eng_wg_comp_mod_2pl.Rds"))
+
+extract_group_df <- function(group_model) {
+  Mit = as_tibble(coef(group_model, simplify=T)$Male$items) %>%
+    mutate(definition = rownames(coef(group_model, simplify=T)$Male$items)) %>%
+    select(-g, -u) %>% 
+    rename(d_m = d)
+  Fit = as_tibble(coef(group_model, simplify=T)$Female$items) %>%
+    mutate(definition = rownames(coef(group_model, simplify=T)$Female$items)) %>%
+    select(-g, -u) %>%
+    rename(d_f = d)
+
+  combo <- Mit %>% left_join(Fit) %>%
+    mutate(d_diff = d_f - d_m,
+           d_diff_abs = abs(d_diff)) 
+  return(combo)
+}
+
+
+mg2_df = extract_group_df(mg2)
+
+# same difficulties:
+mod_sc1_df = extract_group_df(mod_sc1)
+
+
+#anova(m1, mg2) # AIC prefers group model, BIC prefers 2PL
+```
+
+### Items with a large difference in difficulty across sex
+
+```{r}
+# items showing > median + 1SD of absolute difference in difficulty have a lot of DIF
+thresh = median(mg2_df$d_diff_abs) + sd(mg2_df$d_diff_abs)
+big_dif = mg2_df[which(mg2_df$d_diff_abs > thresh),]
+
+#mg2s <- summary(mg2)
+#fem = mg2s[[1]]$rotF
+#mal = mg2s[[2]]$rotF
+big_dif %>% arrange(desc(d_diff_abs)) #%>% kable()
+```
+
+
+### Plot item ease for males vs. females
+
+We label the `r nrow(big_dif)` items with absolute ease difference of more than median + 1SD = `r round(thresh,2)`.
+
+```{r, fig.width=8, fig.height=6}
+ggplot(mg2_df, 
+       aes(x = d_m, y = d_f)) + 
+  geom_point(alpha=.7) + 
+  ggrepel::geom_label_repel(data = filter(mg2_df, d_diff_abs > thresh), 
+                            aes(label = definition), max.overlaps = 20) + theme_bw() +
+  xlab("Item Ease for Males") + 
+  ylab("Item Ease for Females") + 
+  geom_abline(intercept=0, slope=1, linetype='dashed')
+```
+
