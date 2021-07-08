@@ -59,7 +59,7 @@ en_wg <- get_item_data(language="English (American)", form="WG") %>%
   filter(type=="word") %>% select(-complexity_category, -item_id)
 
 # subjects not producing any words yet (can't fit model with them)
-bad_Ss = d_demo[which(d_demo$production==0),]$data_id
+bad_Ss = d_demo[which(d_demo$comprehension==0),]$data_id # 8 bad comprehension Ss
 
 d_long_wg <- d_long_wg %>% left_join(en_wg %>% select(num_item_id, definition)) %>%
   filter(!is.na(definition))
@@ -75,7 +75,7 @@ save(d_mat, d_demo, en_wg, file=here("data/en_wg_comp.Rdata"))
 load(here("data/en_wg_comp.Rdata")) # d_demo, d_mat, en_wg (items)
 
 d_demo <- d_demo %>% 
-  filter(production!=0, !is.na(sex)) %>% # can't fit children not producing words, or with NA sex in group model
+  filter(comprehension!=0, !is.na(sex)) %>% # can't fit children not producing words, or with NA sex in group model
   arrange(data_id)
 
 # there are more IDs in d_mat than in d_demo; remove those
@@ -89,13 +89,13 @@ row.names(d_mat) = sids
 table(en_wg$category)
 ```
 
-We have data from `r nrow(d_demo)` children for the WG form.
+We will fit comprehension data from `r nrow(d_demo)` children for the WG form.
 
 ## Fit baseline 2PL model
 
 ```{r, eval=F}
 m1 <- mirt(d_mat, 1, "2PL", 
-           technical=list(NCYCLES=500))
+           technical=list(NCYCLES=1000))
 
 coefs_2pl <- as_tibble(coef(m1, simplify = TRUE)$items) %>%
   mutate(definition = rownames(coef(m1, simplify = TRUE)$items))
@@ -117,20 +117,21 @@ sex_group = as.character(d_demo$sex)
 
 mg1 <- multipleGroup(d_mat, 1, group = sex_group, SE = T) 
 # Error: Multiple Group model will not be identified without proper constraints (groups contain missing data patterns where item responses have been completely omitted or, alternatively, the number of categories within each group is not equal to the total number of categories)
-mg2 <- multipleGroup(d_mat, model = 1, group = sex_group, technical=list(NCYCLES=1000), 
+mg2 <- multipleGroup(d_mat, model = 1, group = sex_group, technical=list(NCYCLES=4000), 
                      invariance = 'slopes', verbose = T)
 
 
-DIF(mg2, c('d')) # No hyper-parameters were estimated in the DIF model. For effective DIF testing, freeing the focal group hyper-parameters is recommended.
+#DIF(mg2, c('d')) # No hyper-parameters were estimated in the DIF model. For effective DIF testing, freeing the focal group hyper-parameters is recommended.
 
-m_sc2 <- multipleGroup(d_mat, 1, group = sex_group,
+m_sc2 <- multipleGroup(d_mat, 1, group = sex_group, technical=list(NCYCLES=2000),
                        invariance=c('slopes', 'intercepts', 'free_var','free_means'))
-mod_sc1 <- multipleGroup(d_mat, 1, group = sex_group,  #fixed means
+mod_sc1 <- multipleGroup(d_mat, 1, group = sex_group, technical=list(NCYCLES=2000), #fixed means
                              invariance=c('slopes', 'intercepts', 'free_var'))
-mod_fullconstrain <- multipleGroup(d_mat, 1, group = sex_group,
+mod_fullconstrain <- multipleGroup(d_mat, 1, group = sex_group, technical=list(NCYCLES=2000),
                              invariance=c('slopes', 'intercepts'))
 
-extract.mirt(mod_fullconstrain, 'time') #time of estimation components
+#extract.group(m_sc2, "Male")
+#extract.group(m_sc2, "Female")
 
 residuals(mod_sc1)
 
