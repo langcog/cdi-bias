@@ -15,9 +15,10 @@ library(tidyverse)
 library(ggrepel)
 library(mirt) 
 library(here)
-#library(kableExtra)
+library(kableExtra)
 library(gridExtra)
 library(printr)
+library(GGally)
 #library(parallel)
 #library(doParallel)
 #library(mclust)
@@ -102,7 +103,7 @@ coefs_2pl <- as_tibble(coef(m1, simplify = TRUE)$items) %>%
 fscores_2pl <- tibble(data_id = rownames(d_mat), 
                              ability = fscores(m1, method = "MAP")[,1])
 
-save(file = here("data/eng_wg_comp_mod_2pl.Rds"), "m1", "coefs_2pl") # "fscores_2pl",
+save(file = here("data/eng_wg_comp_mod_2pl.Rds"), "m1", "coefs_2pl", "fscores_2pl") # ,
 ```
 
 # DIF Model: Sex
@@ -179,7 +180,7 @@ big_dif = mg2_df[which(mg2_df$d_diff_abs > thresh),]
 #mg2s <- summary(mg2)
 #fem = mg2s[[1]]$rotF
 #mal = mg2s[[2]]$rotF
-big_dif %>% arrange(desc(d_diff_abs)) #%>% kable()
+big_dif %>% arrange(desc(d_diff_abs)) %>% kable(digits = 2)
 ```
 
 
@@ -198,3 +199,35 @@ ggplot(mg2_df,
   geom_abline(intercept=0, slope=1, linetype='dashed')
 ```
 
+## Ability distribution comparison
+
+What are the ability distributions by sex in the 2PL model?
+
+```{r}
+d_demo <- d_demo %>% left_join(fscores_2pl %>% mutate(data_id = as.numeric(data_id)))
+
+d_demo %>% ggplot(aes(x=ability, fill=sex)) + 
+  geom_density(alpha=.3) + 
+  theme_classic()
+```
+
+```{r}
+# get ability scores from sex group model with varying difficulty
+fscores_mg2 <- tibble(data_id = rownames(d_mat), 
+                             ability_sex = fscores(mg2, method = "MAP")[,1])
+
+d_demo <- d_demo %>% left_join(fscores_mg2 %>% 
+                                 mutate(data_id = as.numeric(data_id)))
+
+ggpairs(d_demo, columns = c("age","comprehension","ability","ability_sex"),
+        ggplot2::aes(colour=sex, alpha=.5)) + theme_classic()
+```
+
+```{r}
+d_demo %>% group_by(sex) %>% 
+  summarise(ability_2pl = mean(ability),
+            ability_sex = mean(ability_sex)) %>%
+  kable(digits=2)
+```
+
+Average male ability is slightly higher in the sex group model (i.e., there is a larger female advantage in the standard 2PL model), showing that the 36 items that are easier for females boost female ability estimates.
