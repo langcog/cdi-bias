@@ -184,7 +184,8 @@ big_dif = mg2_df[which(mg2_df$d_diff_abs > thresh),]
 #mg2s <- summary(mg2)
 #fem = mg2s[[1]]$rotF
 #mal = mg2s[[2]]$rotF
-big_dif %>% arrange(desc(d_diff_abs)) %>% kable(digits = 2)
+big_dif %>% relocate(definition) %>%
+  arrange(desc(d_diff_abs)) %>% kable(digits = 2, format = "html", table.attr = "style='width:40%;'")
 ```
 
 
@@ -265,3 +266,52 @@ save(file = here("data/eng_wg_comp_SES_DIF.Rds"),
      mg2, m_sc2, mod_sc1, mod_fullconstrain)
 ```
 
+```{r}
+load(here("data/eng_wg_comp_SES_DIF.Rds"))
+
+extract_ses_group_df <- function(group_model) {
+  Mit = as_tibble(coef(group_model, simplify=T)$high$items) %>%
+    mutate(definition = rownames(coef(group_model, simplify=T)$high$items)) %>%
+    select(-g, -u) %>% 
+    rename(d_hi = d)
+  Fit = as_tibble(coef(group_model, simplify=T)$low$items) %>%
+    mutate(definition = rownames(coef(group_model, simplify=T)$low$items)) %>%
+    select(-g, -u) %>%
+    rename(d_lo = d)
+
+  combo <- Mit %>% left_join(Fit) %>%
+    mutate(d_diff = d_hi - d_lo,
+           d_diff_abs = abs(d_diff)) 
+  return(combo)
+}
+
+mg2_df = extract_ses_group_df(mg2)
+```
+
+### Items with a large difference in difficulty across SES
+
+```{r}
+# items showing > median + 1SD of absolute difference in difficulty have a lot of DIF
+thresh = median(mg2_df$d_diff_abs) + sd(mg2_df$d_diff_abs)
+big_dif = mg2_df[which(mg2_df$d_diff_abs > thresh),]
+
+#mg2s <- summary(mg2)
+big_dif %>% relocate(definition) %>% 
+  arrange(desc(d_diff_abs)) %>% kable(digits = 2, format = "html", table.attr = "style='width:40%;'")
+```
+
+
+### Plot item ease for high vs. low SES
+
+We label the `r nrow(big_dif)` items with absolute ease difference of more than median + 1SD = `r round(thresh,2)`.
+
+```{r, fig.width=8, fig.height=6}
+ggplot(mg2_df, 
+       aes(x = d_lo, y = d_hi)) + 
+  geom_point(alpha=.7) + 
+  ggrepel::geom_label_repel(data = filter(mg2_df, d_diff_abs > thresh), 
+                            aes(label = definition), max.overlaps = 20) + theme_bw() +
+  xlab("Item Ease for low-SES") + 
+  ylab("Item Ease for high-SES") + 
+  geom_abline(intercept=0, slope=1, linetype='dashed')
+```
