@@ -87,6 +87,10 @@ d_mat$data_id = NULL
 d_mat = data.matrix(d_mat)
 row.names(d_mat) = sids
 
+table(d_demo$mom_ed)
+# high SES = mom_ed >= Some College (739 high, 324 low-SES)
+d_demo <- d_demo %>% mutate(ses_group = ifelse(as.numeric(mom_ed)>4, "high", "low"))
+
 table(en_wg$category)
 ```
 
@@ -231,3 +235,33 @@ d_demo %>% group_by(sex) %>%
 ```
 
 Average male ability is slightly higher in the sex group model (i.e., there is a larger female advantage in the standard 2PL model), showing that the 36 items that are easier for females boost female ability estimates.
+
+
+## DIF Model: SES
+
+```{r, eval=F}
+ses_group = as.character(d_demo$ses_group)
+
+#mg1 <- multipleGroup(d_mat, 1, group = ses_group, SE = T) 
+mg2 <- multipleGroup(d_mat, model = 1, group = ses_group, technical=list(NCYCLES=4000), 
+                     invariance = 'slopes', verbose = T)
+
+
+#DIF(mg2, c('d')) # No hyper-parameters were estimated in the DIF model. For effective DIF testing, freeing the focal group hyper-parameters is recommended.
+
+m_sc2 <- multipleGroup(d_mat, 1, group = ses_group, technical=list(NCYCLES=2000),
+                       invariance=c('slopes', 'intercepts', 'free_var','free_means'))
+mod_sc1 <- multipleGroup(d_mat, 1, group = ses_group, technical=list(NCYCLES=2000), #fixed means
+                             invariance=c('slopes', 'intercepts', 'free_var'))
+mod_fullconstrain <- multipleGroup(d_mat, 1, group = ses_group, technical=list(NCYCLES=2000),
+                             invariance=c('slopes', 'intercepts'))
+
+#extract.group(m_sc2, "high")
+#extract.group(m_sc2, "low")
+
+residuals(mod_sc1)
+
+save(file = here("data/eng_wg_comp_SES_DIF.Rds"), 
+     mg2, m_sc2, mod_sc1, mod_fullconstrain)
+```
+
