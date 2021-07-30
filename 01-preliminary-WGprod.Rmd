@@ -166,6 +166,19 @@ mod_sc1_df = extract_group_df(mod_sc1)
 #anova(m1, mg2) # AIC prefers group model, BIC prefers 2PL
 ```
 
+# Get DIF Statistics
+
+```{r, eval=F, include=F}
+# which.par = c('a1','d')
+# items2test = 1  # specify which items to test -- can split up 
+# scheme = 'add' # No hyper-parameters were estimated in the DIF model. For effective DIF testing, freeing the focal group hyper-parameters is recommended.
+# mirtCluster() # allows parallel running of models
+start_time = Sys.time()
+d_s <- DIF(mg2, which.par='d', items2test = 1:2, scheme='drop')
+end_time = Sys.time()
+```
+
+
 ### Items with a large difference in difficulty across sex
 
 ```{r}
