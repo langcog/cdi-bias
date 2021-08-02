@@ -244,8 +244,11 @@ coef(mg3)[[2]]$GroupPars # Female intercept = 0.047 (Male = 0)
 
 residuals(mod_sc1)
 
+mirtCluster()
+mg3_dif = DIF(mg3, c('d'))
+
 save(file = here("data/eng_wg_comp_sex_sexDIF.Rds"), 
-     mg1, mg2, mg3, mg4, m_sc2, mod_sc1, mod_fullconstrain) 
+     mg3_dif, mg1, mg2, mg3, mg4, m_sc2, mod_sc1, mod_fullconstrain) 
 ```
 
 ```{r}
@@ -274,13 +277,24 @@ mg2_df = extract_group_df(mg2)
 mg3_df = extract_group_df(mg3)
 
 # same item estimates with/without free_means? 
-cor(mg2_df$d_f, mg3_df$d_f) # .999
-cor(mg2_df$d_m, mg3_df$d_m) # .999
+#cor(mg2_df$d_f, mg3_df$d_f) # .999
+#cor(mg2_df$d_m, mg3_df$d_m) # .999
 
-
-anova(mg1, mg2) # AIC and BIC prefer slope-invariant model (mg2)
-anova(mg2, mg3) # AIC/BIC prefer mg3, with varying group means
+#anova(mg1, mg2) # AIC and BIC prefer slope-invariant model (mg2)
+#anova(mg2, mg3) # AIC/BIC prefer mg3, with varying group means
 ```
+
+### Items with DIF in difficulty
+
+`r nrow(subset(mg3_dif, p<.05))` items show DIF based on a $\chi^2$ test yielding $p<.05$.
+Below we show the `r nrow(subset(mg3_dif, p<.001))` items with $p<.001$.
+
+```{r}
+mg3_dif %>% arrange(BIC) %>% filter(p < .001) %>%
+  select(-AICc, -SABIC, -HQ, -df) %>%
+  kable(digits = 2, format = "html", table.attr = "style='width:40%;'")
+```
+
 
 ### Items with a large difference in difficulty across sex
 
@@ -389,7 +403,7 @@ mg3 <- multipleGroup(d_mat, model = 1, group = ses_group, technical=list(NCYCLES
 anova(mg1, mg2) # AIC/BIC prefer slope-invariant model (mg2)
 anova(mg2, mg3) # AIC/BIC prefer slope-invariant model without varying group mean
 
-#DIF(mg2, c('d')) # No hyper-parameters were estimated in the DIF model. For effective DIF testing, freeing the focal group hyper-parameters is recommended.
+#DIF(mg1, c('d')) # No hyper-parameters were estimated in the DIF model. For effective DIF testing, freeing the focal group hyper-parameters is recommended.
 
 m_sc2 <- multipleGroup(d_mat, 1, group = ses_group, technical=list(NCYCLES=2000),
                        invariance=c('slopes', 'intercepts', 'free_var','free_means'))
@@ -403,8 +417,12 @@ mod_fullconstrain <- multipleGroup(d_mat, 1, group = ses_group, technical=list(N
 
 residuals(mod_sc1)
 
+mg2_dif = DIF(mg2, c('d')) # No hyper-parameters were estimated in the DIF model. For effective DIF testing, freeing the focal group hyper-parameters is recommended.
+mg3_dif = DIF(mg3, c('d')) # (though varying group mean not justified according to AIC/BIC)
+
 save(file = here("data/eng_wg_comp_SES_DIF.Rds"), 
-     mg1, mg2, mg3, m_sc2, mod_sc1, mod_fullconstrain)
+     mg1, mg2, mg3, m_sc2, mod_sc1, mod_fullconstrain,
+     mg2_dif, mg3_dif)
 ```
 
 ```{r}
@@ -433,7 +451,16 @@ mg3_df = extract_ses_group_df(mg3)
 coef(mg3)[[2]]$GroupPars # low-SES group (high is ref) intercept = .25
 ```
 
+### Items with DIF in difficulty
 
+`r nrow(subset(mg3_dif, p<.05))` items show DIF based on a $\chi^2$ test yielding $p<.05$.
+We show these items below.
+
+```{r}
+mg3_dif %>% arrange(BIC) %>% filter(p < .05) %>%
+  select(-AICc, -SABIC, -HQ, -df) %>%
+  kable(digits = 2, format = "html", table.attr = "style='width:40%;'")
+```
 
 ### Items with a large difference in difficulty across SES
 
