@@ -56,19 +56,18 @@ plot_glimmer <- function(mod_intuitive, item_names, plotName='') {
   draws_df <- mod_intuitive %>% mod_intuitive_to_draws_df()
   names(draws_df) = c("run", item_names)
   
-  if(plotName!='') ggsave(paste0(plotName,'.pdf'), 
-                          width=8, height=50, # .2 * length(item_names)
-                          limitsize = F) 
+  
   p <- draws_df %>%
     clean_names() %>%
     gather(var, val, -run) %>%
     mutate(var = fct_reorder(var, val)) %>%
     ggplot(aes(x = val, y = var)) +
     ggridges::geom_density_ridges() +
-    geom_vline(aes(xintercept=0, linetype='dashed'), alpha=.5) +
+    geom_vline(aes(xintercept=0), linetype='dashed', alpha=.5) +
     labs(x = "", y = "") + theme_classic()
-  dev.off()
-  
+  if(plotName!='') ggsave(paste0(plotName,'.pdf'), 
+                          width=8, height=50, # .2 * length(item_names)
+                          limitsize = F) 
   return(p)
 }
 
