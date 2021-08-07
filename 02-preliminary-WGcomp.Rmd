@@ -229,6 +229,8 @@ anova(mg1, mg2) # AIC and BIC prefer slope-invariant model (mg2)
 anova(mg2, mg3) # AIC/BIC prefer mg3, with varying group means
 anova(mg3, mg4) # AIC/BIC prefer mg3, with varying group means but equal variance
 
+# Takehome: by model comparison, we find that equal slopes (across sex) and equal variance, but varying group means (and item difficulties) are justified.
+
 anova(mod_sc1, mod_fullconstrain) # mod_fullconstrain preferred by BIC, sc1 by AIC
 anova(m_sc2, mod_fullconstrain) # mod_fullconstrain preferred by BIC, sc2 by AIC
 
@@ -377,6 +379,9 @@ d_demo %>% group_by(sex) %>%
 ```
 
 Average male ability is slightly higher in the sex group model (i.e., there is a larger female advantage in the standard 2PL model), showing that the 36 items that are easier for females boost female ability estimates.
+
+Extracting the estimated ability intercept for males from mg3: `r round(coef(mg3)[["Male"]]$GroupPars[1],2)`. 
+(Why is this positive? Females should have higher ability (see plot).)
 
 
 ## SES-related DIF
