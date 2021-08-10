@@ -28,7 +28,7 @@ library(ggpubr)
 ```
 
 First, let's get some wordbank data for American English. We'll start with production data from the CDI: Words & Gestures (WG) form.
-We'll look for DIF based on 1) sex and 2) SES (high vs. low). 
+We'll look for DIF based on 1) sex, 2) SES (high vs. low), and 3) race/ethnicity. 
 Questions: How do we choose a dozen anchor items (that we expect to be unbiased)?
 
 ```{r get-wordbank-data, eval=F, echo=F}
@@ -131,7 +131,7 @@ res_m = residuals(m1pl_m)
 ```
 
 
-```{r, echo=F}
+```{r, echo=F, include=F}
 load(here("data/eng_wg_rasch_group_models.Rds"))
 
 # coef(m1pl_m) shows CI_2.5 and CI_97.5 for d...iterate over and add to dataframes?
@@ -178,11 +178,11 @@ p2 <- ggplot(rasch_pars,
   geom_abline(intercept=0, slope=1, linetype='dashed')
 ```
 
-```{r, echo=F, fig.width=10, fig.height=5}
+```{r, echo=F, fig.width=10, fig.height=5, include=F}
 ggarrange(p1, p2)
 ```
 
-
+(See external PDFs and GLIMMER_WGcomp.R)
 
 # DIF Model: Sex
 

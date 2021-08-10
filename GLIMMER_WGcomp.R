@@ -11,10 +11,13 @@ load(here("data/en_wg_comp.Rdata")) # d_demo, d_mat, en_wg (items)
 
 d_demo <- d_demo %>% 
   filter(comprehension!=0, !is.na(sex)) %>% # can't fit children not producing words, or with NA sex in group model
-  arrange(data_id)
+  arrange(data_id) %>%
+  mutate(eth_group = ifelse(ethnicity=="White", "White", "Nonwhite"))
 
 # there are more IDs in d_mat than in d_demo; remove those
 d_mat <- d_mat %>% filter(is.element(data_id, d_demo$data_id)) %>% arrange(data_id)
+
+
 
 sids = d_mat$data_id
 d_mat$data_id = NULL
@@ -23,6 +26,7 @@ row.names(d_mat) = sids
 
 sex_group = as.character(d_demo$sex)
 ses_group = as.character(d_demo$ses_group)
+eth_group = as.character(d_demo$eth_group)
 
 # MIRT FUNCTION HELPERS ---------------------------------------------------
 fit_mod_intuitive <- function(data, groups){
@@ -75,10 +79,11 @@ plot_glimmer <- function(mod_intuitive, item_names, plotName='') {
 # RUN MODELS
 mod_intuitive_sex <- fit_mod_intuitive(d_mat, sex_group)
 mod_intuitive_ses <- fit_mod_intuitive(d_mat, ses_group)
-
+mod_intuitive_eth <- fit_mod_intuitive(d_mat, eth_group)
 
 # GLIMMER TIME
 plot_glimmer(mod_intuitive_sex, colnames(d_mat), plotName="GLIMMER_sex_compWG")
 plot_glimmer(mod_intuitive_ses, colnames(d_mat), plotName="GLIMMER_ses_compWG")
+plot_glimmer(mod_intuitive_eth, colnames(d_mat), plotName="GLIMMER_eth_compWG")
 
 
