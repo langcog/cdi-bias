@@ -50,7 +50,7 @@ Let's do comprehension data.
 
 ```{r get-wordbank-items, eval=F, echo=F}
 d_long_wg <- get_instrument_data(language="English (American)", form = "WG") %>%
-  mutate(understands = as.numeric(value == "yes" | value == "produces" | value == "understands")) # we'll start with production
+  mutate(understands = as.numeric(value == "yes" | value == "produces" | value == "understands")) # we'll start with comprehension
 # yes = understands; no = does not understand/produce, produces = produces (and understands)
 
 en_wg <- get_item_data(language="English (American)", form="WG") %>%
