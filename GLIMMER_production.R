@@ -137,7 +137,7 @@ extract_group_df <- function(group_model, groups=c("Male","Female")) {
            group2 = groups[2]) %>%
     select(-g, -u) %>% 
     rename(d_g1 = d)
-  Fit = as_tibble(coef(group_model, simplify=T)$Female$items) %>%
+  Fit = as_tibble(coef(group_model, simplify=T)[[groups[2]]]$items) %>%
     mutate(definition = rownames(coef(group_model, simplify=T)[[groups[2]]]$items)) %>%
     select(-g, -u) %>%
     rename(d_g2 = d)
@@ -148,11 +148,19 @@ extract_group_df <- function(group_model, groups=c("Male","Female")) {
   return(combo)
 }
 
-item_difficulty_difference_histogram <- function(mm) {
-  mm %>% ggplot(aes(x=d_g2 - d_g1)) +
-    geom_histogram() + theme_classic() +
+item_difficulty_difference_histogram <- function(mm, withNormal=F) {
+  #yfit <- dnorm(mm$d_diff, mean = mean(mm$d_diff), sd = sd(mm$d_diff)) 
+
+  p <- mm %>% ggplot(aes(x=d_g2 - d_g1)) +
+    geom_histogram(aes(y =..density..), alpha=.7) + theme_classic() +
     geom_vline(aes(xintercept=median(d_diff)), linetype="dashed") +
     xlab(paste(mm$group2, "-", mm$group1, "Item Difficulty"))
+  
+  if(withNormal) {
+  p <- p + stat_function(fun = dnorm, alpha=.6, 
+                         args = list(mean = mean(mm$d_diff), sd = sd(mm$d_diff)))
+  }
+  return(p)
 }
 
 mm_sex <- extract_group_df(mod_intuitive_sex, groups=c("Male","Female"))
@@ -164,6 +172,13 @@ ses_hist <- item_difficulty_difference_histogram(mm_ses)
 mm_eth <- extract_group_df(mod_intuitive_eth, groups=c("Nonwhite","White"))
 eth_hist <- item_difficulty_difference_histogram(mm_eth)
 
-
 require(ggpubr)
 ggarrange(sex_hist, ses_hist, eth_hist, nrow=1)
+ggsave(file="item_DIF_hist_sex.pdf", width=8, height=3.5)
+
+sex_histn <- item_difficulty_difference_histogram(mm_sex, withNormal = T)
+ses_histn <- item_difficulty_difference_histogram(mm_ses, withNormal = T)
+eth_histn <- item_difficulty_difference_histogram(mm_eth, withNormal = T)
+
+ggarrange(sex_histn, ses_histn, eth_histn, nrow=1)
+ggsave(file="item_DIF_hist_sex_withNormals.pdf", width=8, height=3.5)
