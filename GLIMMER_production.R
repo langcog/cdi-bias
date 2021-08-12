@@ -126,3 +126,44 @@ plot_glimmer(mod_intuitive_ses, colnames(d_mat), plotName="GLIMMER_ses_prodWS")
 plot_glimmer(mod_intuitive_eth, colnames(d_mat), plotName="GLIMMER_eth_prodWS")
 
 
+# histograms of item difficulty differences
+
+#mod_p <- summary(mod_intuitive_sex)
+
+extract_group_df <- function(group_model, groups=c("Male","Female")) {
+  Mit = as_tibble(coef(group_model, simplify=T)[[groups[1]]]$items) %>%
+    mutate(definition = rownames(coef(group_model, simplify=T)[[groups[1]]]$items),
+           group1 = groups[1],
+           group2 = groups[2]) %>%
+    select(-g, -u) %>% 
+    rename(d_g1 = d)
+  Fit = as_tibble(coef(group_model, simplify=T)$Female$items) %>%
+    mutate(definition = rownames(coef(group_model, simplify=T)[[groups[2]]]$items)) %>%
+    select(-g, -u) %>%
+    rename(d_g2 = d)
+  
+  combo <- Mit %>% left_join(Fit) %>%
+    mutate(d_diff = d_g2 - d_g1,
+           d_diff_abs = abs(d_diff)) 
+  return(combo)
+}
+
+item_difficulty_difference_histogram <- function(mm) {
+  mm %>% ggplot(aes(x=d_g2 - d_g1)) +
+    geom_histogram() + theme_classic() +
+    geom_vline(aes(xintercept=median(d_diff)), linetype="dashed") +
+    xlab(paste(mm$group2, "-", mm$group1, "Item Difficulty"))
+}
+
+mm_sex <- extract_group_df(mod_intuitive_sex, groups=c("Male","Female"))
+sex_hist <- item_difficulty_difference_histogram(mm_sex)
+
+mm_ses <- extract_group_df(mod_intuitive_ses, groups=c("high","low"))
+ses_hist <- item_difficulty_difference_histogram(mm_ses)
+
+mm_eth <- extract_group_df(mod_intuitive_eth, groups=c("Nonwhite","White"))
+eth_hist <- item_difficulty_difference_histogram(mm_eth)
+
+
+require(ggpubr)
+ggarrange(sex_hist, ses_hist, eth_hist, nrow=1)
