@@ -150,10 +150,16 @@ extract_group_df <- function(group_model, groups=c("Male","Female")) {
 
 item_difficulty_difference_histogram <- function(mm, withNormal=F) {
   #yfit <- dnorm(mm$d_diff, mean = mean(mm$d_diff), sd = sd(mm$d_diff)) 
-
-  p <- mm %>% ggplot(aes(x=d_g2 - d_g1)) +
+  mm <- mm %>% mutate(d_diff = d_g2 - d_g1)
+  max_dif = mean(mm$d_diff) + 2*sd(mm$d_diff)
+  min_dif = mean(mm$d_diff) - 2*sd(mm$d_diff)
+  mm <- mm %>% mutate(extreme = ifelse((d_diff > max_dif) | (d_diff < min_dif), T, F))
+  
+  p <- mm %>% ggplot(aes(x=d_diff)) + # , fill=extrem
     geom_histogram(aes(y =..density..), alpha=.7) + theme_classic() +
     geom_vline(aes(xintercept=median(d_diff)), linetype="dashed") +
+    geom_vline(aes(xintercept=max_dif), linetype="dashed", color="red") +
+    geom_vline(aes(xintercept=min_dif), linetype="dashed", color="red") +
     xlab(paste(mm$group2, "-", mm$group1, "Item Difficulty"))
   
   if(withNormal) {
@@ -174,11 +180,11 @@ eth_hist <- item_difficulty_difference_histogram(mm_eth)
 
 require(ggpubr)
 ggarrange(sex_hist, ses_hist, eth_hist, nrow=1)
-ggsave(file="item_DIF_hist_sex.pdf", width=8, height=3.5)
+ggsave(file="item_DIF_hist_thresh.pdf", width=8, height=3.5)
 
 sex_histn <- item_difficulty_difference_histogram(mm_sex, withNormal = T)
 ses_histn <- item_difficulty_difference_histogram(mm_ses, withNormal = T)
 eth_histn <- item_difficulty_difference_histogram(mm_eth, withNormal = T)
 
 ggarrange(sex_histn, ses_histn, eth_histn, nrow=1)
-ggsave(file="item_DIF_hist_sex_withNormals.pdf", width=8, height=3.5)
+ggsave(file="item_DIF_hists_withNormals.pdf", width=8, height=3.5)
