@@ -1,0 +1,123 @@
+---
+title: "CDI:WS Production Bias Report"
+author: "Nathan, George, & Mike"
+date: "8/17/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+
+library(tidyverse)
+library(difR)
+library(mirt)
+library(janitor)
+library(here)
+require(kableExtra)
+
+# created in GLIMMER_production.R
+load(here("data/en_ws_production.Rdata")) # d_demo, d_mat, en_wg (items)
+source("report_helper_functions.R")
+```
+
+# Introduction
+
+## Item-Response Theory
+
+## Differential Item Function
+
+### Dataset
+
+We analyze Wordbank CDI Words & Sentences form data from `r nrow(d_demo)` children aged `r min(d_demo$age)` to `r max(d_demo$age)`.
+
+```{r, sex-table}
+#d_demo <- d_demo %>% mutate(relevel() # remove empty "Other" level?
+
+table(d_demo$sex) %>% kable(format = "html", table.attr = "style='width:30%;'")
+```
+
+
+## Goals
+
+For each axis (sex, SES, race/ethnicity)
+1) show GLIMMER plots (small sample of words)
+2) histograms of DIF: fit normal distro, exclude >2SD (list those items)
+  - overall statistic measuring DIF of the test? sd(normal), but that doesn't account for overall group difference (subtract mean?) (DTF definition/statistic)
+3) re-fit IRT model, show new GLIMMER (discuss: does the test look much more fair, or are there new outliers?)
+4) suggested new words from CHILDES (equal frequency for boys/girls) [but we can't do this for SES/race unless CHILDES has demo data]
+
+
+
+## Sex DIF
+
+### GLIMMER plots
+
+```{r show-sex-glimmer, fig.width=5, fig.height=5.5, caption="GLIMMER plot for sample of items showing most DIF in both directions, as well as a random sample from the middle."}
+load("data/glimmer_prodWS_models.Rds")
+
+
+
+plot_glimmer(mod_intuitive_sex, colnames(d_mat)[2:ncol(d_mat)])
+
+```
+
+### Removing Biased Items
+
+```{r}
+mm_sex <- extract_group_df(mod_intuitive_sex, groups=c("Male","Female"))
+sex_hist <- item_difficulty_difference_histogram(mm_sex)
+
+orig_sex <- get_extreme_item_difficulty_differences(mm_sex) # min: -.53 max: 1.06 (mean + 2SD)
+sex_hist
+```
+
+```{r sex-diff-table}
+items_to_remove <- orig_sex %>% filter(extreme==T) 
+
+items_to_remove %>% filter(extreme==T) %>%
+  arrange(d_diff) %>% 
+  select(-d_diff_abs, -extreme, -a1) %>%
+  kable(format = "html", digits = 2, table.attr = "style='width:30%;'")
+```
+
+ToDo: filter items_to_remove out of d_mat, re-run 1PL IRT model
+
+see what the new distribution of item difficulty differences looks like (are there any more outliers?)
+
+```{r, eval=F}
+# chunk to run once:
+mod_intuitive_sex <- fit_mod_intuitive(d_mat, sex_group)
+
+save()
+```
+
+```{r}
+load()
+```
+
+
+
+## SES DIF
+
+```{r ses-table}
+
+```
+
+
+```{r}
+plot_glimmer(mod_intuitive_ses, colnames(d_mat), plotName="GLIMMER_ses_prodWS")
+
+```
+
+
+## Race/Ethnicity DIF
+
+```{r, race-table}
+# breakdown white/non-white
+```
+
+
+# Discussion
+
+Where to go from here -- other languages, regional variation, 
+- using adult word vectors to find unbiased items?

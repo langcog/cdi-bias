@@ -148,6 +148,16 @@ extract_group_df <- function(group_model, groups=c("Male","Female")) {
   return(combo)
 }
 
+get_extreme_item_difficulty_differences <- function(mm) {
+  #yfit <- dnorm(mm$d_diff, mean = mean(mm$d_diff), sd = sd(mm$d_diff)) 
+  mm <- mm %>% mutate(d_diff = d_g2 - d_g1)
+  max_dif = mean(mm$d_diff) + 2*sd(mm$d_diff)
+  min_dif = mean(mm$d_diff) - 2*sd(mm$d_diff)
+  mm <- mm %>% mutate(extreme = ifelse((d_diff > max_dif) | (d_diff < min_dif), T, F))
+  print(paste("mininum difference:",min_dif, "maximum difference:",max_dif))
+  return(mm)
+}
+
 item_difficulty_difference_histogram <- function(mm, withNormal=F) {
   #yfit <- dnorm(mm$d_diff, mean = mean(mm$d_diff), sd = sd(mm$d_diff)) 
   mm <- mm %>% mutate(d_diff = d_g2 - d_g1)
