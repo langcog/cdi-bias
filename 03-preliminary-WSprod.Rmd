@@ -1,0 +1,438 @@
+---
+title: "Looking for CDI Bias: WS Production"
+author: "Nathan, George, and Mike"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=F}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(wordbankr)
+library(tidyverse)
+library(ggrepel)
+library(mirt) 
+library(here)
+library(kableExtra)
+library(gridExtra)
+library(printr)
+library(GGally)
+library(ggpubr)
+#library(parallel)
+#library(doParallel)
+#library(mclust)
+#library(Rtsne)
+#library(factoextra)
+```
+
+First, let's get some wordbank data for American English. We'll now turn to production data from the CDI: Words & Sentences (WS) form.
+We'll look for DIF based on 1) sex, 2) SES (high vs. low), and 3) race/ethnicity. 
+
+```{r load-data}
+# see GLIMMER_production.R
+load(here("data/en_ws_production.Rdata"))
+
+d_demo <- d_demo %>% 
+  filter(comprehension!=0, !is.na(sex)) %>% # can't fit children not producing words, or with NA sex in group model
+  arrange(data_id) %>%
+  mutate(eth_group = ifelse(ethnicity=="White", "White", "Nonwhite"),
+         ses_group = 
+           ifelse(is.element(mom_ed, c("None", "Primary", "Some Secondary", "Secondary")), "low", "high"))
+  
+
+# there are more IDs in d_mat than in d_demo; remove those
+d_mat <- d_mat %>% filter(is.element(data_id, d_demo$data_id)) %>% arrange(data_id)
+
+# only 4090 kids with demographic variables
+
+sids = d_mat$data_id
+d_mat$data_id = NULL
+d_mat = data.matrix(d_mat)
+row.names(d_mat) = sids
+
+sex_group = as.character(d_demo$sex)
+ses_group = as.character(d_demo$ses_group)
+eth_group = as.character(d_demo$eth_group)
+
+table(d_demo$mom_ed)
+
+
+table(en_ws$category) %>% kable(format = "html", table.attr = "style='width:30%;'")
+```
+
+We will fit comprehension data from `r nrow(d_demo)` children for the WS form.
+
+## Fit baseline 2PL model
+
+```{r, eval=F}
+m1 <- mirt(d_mat, 1, "2PL", 
+           technical=list(NCYCLES=1000))
+
+coefs_2pl <- as_tibble(coef(m1, simplify = TRUE)$items) %>%
+  mutate(definition = rownames(coef(m1, simplify = TRUE)$items))
+fscores_2pl <- tibble(data_id = rownames(d_mat), 
+                             ability = fscores(m1, method = "MAP")[,1])
+
+sex_group = as.character(d_demo$sex)
+
+save(file = here("data/eng_ws_prod_mod_2pl.Rds"), "m1", "coefs_2pl", "fscores_2pl") 
+```
+
+## GLIMMER Plots
+
+(See external PDFs and GLIMMER_WGcomp.R)
+
+# DIF Model: Sex
+
+```{r, eval=F}
+# https://rdrr.io/cran/mirt/man/DIF.html
+# https://rdrr.io/cran/mirt/man/multipleGroup.html
+
+# won't work if some items are all 0 (or 1?) for one sex
+mg1 <- multipleGroup(d_mat, 1, group = sex_group,
+                     technical=list(NCYCLES=4000)) 
+#mg1 <- multipleGroup(d_mat, 1, group = sex_group, 
+#                     invariance = c("free_var", "free_means")) 
+
+mg2 <- multipleGroup(d_mat, model = 1, group = sex_group, technical=list(NCYCLES=4000), 
+                     invariance = 'slopes', verbose = T)
+#DIF(mg2, c('d')) # No hyper-parameters were estimated in the DIF model. For effective DIF testing, freeing the focal group hyper-parameters is recommended.
+
+m_sc2 <- multipleGroup(d_mat, 1, group = sex_group, technical=list(NCYCLES=2000),
+                       invariance=c('slopes', 'intercepts', 'free_var','free_means'))
+
+# constrain slopes, freely estimate latent group means (reference group constrained to a vector of 0)
+mg3 <- multipleGroup(d_mat, model = 1, group = sex_group, technical=list(NCYCLES=4000), 
+                     invariance =c('slopes', 'free_means'), verbose = T)
+
+# constrain slopes, allow varying group means and variances -- very slow!
+mg4 <- multipleGroup(d_mat, model = 1, group = sex_group, technical=list(NCYCLES=4000), 
+                     invariance =c('slopes','free_means', 'free_var'), verbose = T)
+
+# fixed means, varying group variance
+mod_sc1 <- multipleGroup(d_mat, 1, group = sex_group, technical=list(NCYCLES=2000),
+                             invariance=c('slopes', 'intercepts', 'free_var'))
+# fully-constrained
+mod_fullconstrain <- multipleGroup(d_mat, 1, group = sex_group, technical=list(NCYCLES=2000),
+                             invariance=c('slopes', 'intercepts'))
+
+# constrain intercepts to be equal across groups, but allow group slopes to vary
+m_int <- multipleGroup(d_mat, 1, group = sex_group, technical=list(NCYCLES=2000),
+                     invariance = 'intercepts')
+
+anova(mg1, mg2) # AIC and BIC prefer slope-invariant model (mg2)
+anova(mg2, mg3) # AIC/BIC prefer mg3, with varying group means
+anova(mg3, mg4) # AIC/BIC prefer mg3, with varying group means but equal variance
+
+# Takehome: by model comparison, we find that equal slopes (across sex) and equal variance, but varying group means (and item difficulties) are justified.
+
+anova(mod_sc1, mod_fullconstrain) # mod_fullconstrain preferred by BIC, sc1 by AIC
+anova(m_sc2, mod_fullconstrain) # mod_fullconstrain preferred by BIC, sc2 by AIC
+
+anova(mod_fullconstrain, mg2) # AIC and BIC both prefer slope-invariant model
+
+anova(m_int, mod_fullconstrain) # AIC prefers intercept-constrained model; BIC prefers fully-constrained
+
+
+coef(mg3)[[2]]$GroupPars # Female intercept = 0.047 (Male = 0) 
+
+#extract.group(m_sc2, "Male")
+#extract.group(m_sc2, "Female")
+
+residuals(mod_sc1)
+
+mirtCluster()
+mg3_dif = DIF(mg3, c('d'))
+
+save(file = here("data/eng_ws_prod_sex_sexDIF.Rds"), 
+     mg3_dif, mg1, mg2, mg3, mg4, m_sc2, mod_sc1, mod_fullconstrain) 
+```
+
+```{r}
+load(here("data/eng_ws_prod_sex_sexDIF.Rds"))
+load(here("data/eng_ws_prod_mod_2pl.Rds"))
+
+extract_group_df <- function(group_model) {
+  Mit = as_tibble(coef(group_model, simplify=T)$Male$items) %>%
+    mutate(definition = rownames(coef(group_model, simplify=T)$Male$items)) %>%
+    select(-g, -u) %>% 
+    rename(d_m = d)
+  Fit = as_tibble(coef(group_model, simplify=T)$Female$items) %>%
+    mutate(definition = rownames(coef(group_model, simplify=T)$Female$items)) %>%
+    select(-g, -u) %>%
+    rename(d_f = d)
+
+  combo <- Mit %>% left_join(Fit) %>%
+    mutate(d_diff = d_f - d_m,
+           d_diff_abs = abs(d_diff)) 
+  return(combo)
+}
+
+
+# slope-invariant, varying difficulty:
+mg2_df = extract_group_df(mg2)
+mg3_df = extract_group_df(mg3)
+
+# same item estimates with/without free_means? 
+#cor(mg2_df$d_f, mg3_df$d_f) # .999
+#cor(mg2_df$d_m, mg3_df$d_m) # .999
+
+#anova(mg1, mg2) # AIC and BIC prefer slope-invariant model (mg2)
+#anova(mg2, mg3) # AIC/BIC prefer mg3, with varying group means
+```
+
+### Items with DIF in difficulty
+
+`r nrow(subset(mg3_dif, p<.05))` items show DIF based on a $\chi^2$ test yielding $p<.05$.
+Below we show the `r nrow(subset(mg3_dif, p<.001))` items with $p<.001$.
+
+```{r}
+mg3_dif %>% arrange(BIC) %>% filter(p < .001) %>%
+  select(-AICc, -SABIC, -HQ, -df) %>%
+  kable(digits = 2, format = "html", table.attr = "style='width:40%;'")
+```
+
+
+### Items with a large difference in difficulty across sex
+
+```{r}
+# items showing > median + 1SD of absolute difference in difficulty have a lot of DIF
+thresh = median(mg3_df$d_diff_abs) + sd(mg3_df$d_diff_abs)
+big_dif = mg3_df[which(mg3_df$d_diff_abs > thresh),]
+
+#mg2s <- summary(mg2)
+#fem = mg2s[[1]]$rotF
+#mal = mg2s[[2]]$rotF
+big_dif %>% relocate(definition) %>%
+  arrange(desc(d_diff_abs)) %>% kable(digits = 2, format = "html", table.attr = "style='width:40%;'")
+```
+
+
+### Plot item ease for males vs. females
+
+We label the `r nrow(big_dif)` items with absolute ease difference of more than median + 1SD = `r round(thresh,2)`.
+
+```{r, fig.width=8, fig.height=6}
+ggplot(mg3_df, 
+       aes(x = d_m, y = d_f)) + 
+  geom_point(alpha=.7) + 
+  ggrepel::geom_label_repel(data = filter(mg2_df, d_diff_abs > thresh), 
+                            aes(label = definition), max.overlaps = 20) + theme_bw() +
+  xlab("Item Ease for Males") + 
+  ylab("Item Ease for Females") + 
+  geom_abline(intercept=0, slope=1, linetype='dashed')
+```
+
+### Anchor items
+
+For our DIF analysis, let's pick 10 anchor items that show the smallest difficulty difference in the slope-invariant free group means model (mg3).
+
+```{r}
+sex_anchors = mg3_df %>% arrange(d_diff_abs) %>% head(10) %>% 
+  relocate(a1, .after=definition) %>%
+  relocate(d_m, .after=d_f)
+
+sex_anchors %>% kable(digits = 3, format = "html", table.attr = "style='width:40%;'")
+```
+
+
+## Ability distribution comparison
+
+What are the ability distributions by sex in the 2PL model?
+
+```{r}
+d_demo <- d_demo %>% left_join(fscores_2pl %>% mutate(data_id = as.numeric(data_id)))
+
+d_demo %>% ggplot(aes(x=ability, fill=sex)) + 
+  geom_density(alpha=.3) + 
+  theme_classic()
+```
+
+```{r}
+# get ability scores from sex group model with varying difficulty
+fscores_mg3 <- tibble(data_id = rownames(d_mat), 
+                             ability_sex = fscores(mg3, method = "MAP")[,1])
+
+fscores_mg2 <- tibble(data_id = rownames(d_mat), 
+                             ability_sex = fscores(mg2, method = "MAP")[,1])
+
+# very similar
+#plot(fscores_mg3$ability_sex, fscores_mg2$ability_sex, pch='.')
+
+d_demo <- d_demo %>% left_join(fscores_mg3 %>% 
+                                 mutate(data_id = as.numeric(data_id))) 
+
+ggpairs(d_demo, columns = c("age","comprehension","ability","ability_sex"),
+        ggplot2::aes(colour=sex, alpha=.5)) + theme_classic()
+```
+
+```{r}
+d_demo %>% group_by(sex) %>% 
+  summarise(ability_2pl = mean(ability),
+            ability_sex = mean(ability_sex)) %>%
+  kable(digits = 2, format = "html", table.attr = "style='width:30%;'")
+```
+
+Average male ability is slightly higher in the sex group model (i.e., there is a larger female advantage in the standard 2PL model), showing that the 36 items that are easier for females boost female ability estimates.
+
+Extracting the estimated ability intercept for males from mg3: `r round(coef(mg3)[["Male"]]$GroupPars[1],2)`. 
+(Why is this positive? Females should have higher ability (see plot).)
+
+
+## SES-related DIF
+
+Now we will look for SES-based DIF, using mother's education as a proxy for SES. 
+Here's the distribution of mom_ed in our data:
+
+```{r, mom-ed-tab, echo=F}
+table(d_demo$mom_ed) %>% kable(format = "html", table.attr = "style='width:30%;'")
+```
+
+We (arbitrarily) define high SES as their mother having at least some college (N=`r length(which(d_demo$ses_group=="high"))`), and low SES as having at most secondary education (N=`r length(which(d_demo$ses_group=="low"))`).
+
+
+```{r, eval=F}
+ses_group = as.character(d_demo$ses_group)
+
+mg1 <- multipleGroup(d_mat, 1, group = ses_group, SE = T, technical=list(NCYCLES=4000)) 
+mg2 <- multipleGroup(d_mat, model = 1, group = ses_group, technical=list(NCYCLES=4000), 
+                     invariance = 'slopes', verbose = T)
+mg3 <- multipleGroup(d_mat, model = 1, group = ses_group, technical=list(NCYCLES=4000), 
+                     invariance = c('slopes', 'free_means'), verbose = T)
+
+anova(mg1, mg2) # AIC/BIC prefer slope-invariant model (mg2)
+anova(mg2, mg3) # AIC/BIC prefer slope-invariant model without varying group mean
+
+#DIF(mg1, c('d')) # No hyper-parameters were estimated in the DIF model. For effective DIF testing, freeing the focal group hyper-parameters is recommended.
+
+m_sc2 <- multipleGroup(d_mat, 1, group = ses_group, technical=list(NCYCLES=2000),
+                       invariance=c('slopes', 'intercepts', 'free_var','free_means'))
+mod_sc1 <- multipleGroup(d_mat, 1, group = ses_group, technical=list(NCYCLES=2000), #fixed means
+                             invariance=c('slopes', 'intercepts', 'free_var'))
+mod_fullconstrain <- multipleGroup(d_mat, 1, group = ses_group, technical=list(NCYCLES=2000),
+                             invariance=c('slopes', 'intercepts'))
+
+#extract.group(m_sc2, "high")
+#extract.group(m_sc2, "low")
+
+#residuals(mod_sc1)
+
+mg2_dif = DIF(mg2, c('d')) # No hyper-parameters were estimated in the DIF model. For effective DIF testing, freeing the focal group hyper-parameters is recommended.
+#mg3_dif = DIF(mg3, c('d')) # (though varying group mean not justified according to AIC/BIC)
+
+save(file = here("data/eng_wg_comp_SES_DIF.Rds"), 
+     mg1, mg2, mg3, m_sc2, mod_sc1, mod_fullconstrain,
+     mg2_dif) # mg3_dif
+```
+
+```{r}
+load(here("data/eng_wg_comp_SES_DIF.Rds"))
+load(here("data/eng_wg_comp_mod_2pl.Rds"))
+
+extract_ses_group_df <- function(group_model) {
+  Mit = as_tibble(coef(group_model, simplify=T)$high$items) %>%
+    mutate(definition = rownames(coef(group_model, simplify=T)$high$items)) %>%
+    select(-g, -u) %>% 
+    rename(d_hi = d)
+  Fit = as_tibble(coef(group_model, simplify=T)$low$items) %>%
+    mutate(definition = rownames(coef(group_model, simplify=T)$low$items)) %>%
+    select(-g, -u) %>%
+    rename(d_lo = d)
+
+  combo <- Mit %>% left_join(Fit) %>%
+    mutate(d_diff = d_hi - d_lo,
+           d_diff_abs = abs(d_diff)) 
+  return(combo)
+}
+
+mg2_df = extract_ses_group_df(mg2)
+mg3_df = extract_ses_group_df(mg3)
+
+coef(mg3)[[2]]$GroupPars # low-SES group (high is ref) intercept = .25
+```
+
+### Items with DIF in difficulty
+
+`r nrow(subset(mg3_dif, p<.05))` items show DIF based on a $\chi^2$ test yielding $p<.05$.
+We show these items below.
+
+```{r}
+mg3_dif %>% arrange(BIC) %>% filter(p < .05) %>%
+  select(-AICc, -SABIC, -HQ, -df) %>%
+  kable(digits = 2, format = "html", table.attr = "style='width:40%;'")
+```
+
+### Items with a large difference in difficulty across SES
+
+```{r}
+# items showing > median + 1SD of absolute difference in difficulty have a lot of DIF
+thresh = median(mg2_df$d_diff_abs) + sd(mg2_df$d_diff_abs)
+big_dif = mg2_df[which(mg2_df$d_diff_abs > thresh),]
+
+#mg2s <- summary(mg2)
+big_dif %>% relocate(definition) %>% 
+  arrange(desc(d_diff_abs)) %>% kable(digits = 2, format = "html", table.attr = "style='width:40%;'")
+```
+
+
+### Plot item ease for high vs. low SES
+
+We label the `r nrow(big_dif)` items with absolute ease difference of more than median + 1SD = `r round(thresh,2)`.
+
+```{r, fig.width=8, fig.height=6}
+ggplot(mg2_df, 
+       aes(x = d_lo, y = d_hi)) + 
+  geom_point(alpha=.7) + 
+  ggrepel::geom_label_repel(data = filter(mg2_df, d_diff_abs > thresh), 
+                            aes(label = definition), max.overlaps = 20) + theme_bw() +
+  xlab("Item Ease for low-SES") + 
+  ylab("Item Ease for high-SES") + 
+  geom_abline(intercept=0, slope=1, linetype='dashed')
+```
+
+### Anchor items
+
+For our DIF analysis, let's pick 10 anchor items that show the smallest difficulty difference in the slope-invariant model (mg2).
+
+```{r ses-anchors, echo=F}
+ses_anchors = mg2_df %>% arrange(d_diff_abs) %>% head(10) %>% 
+  relocate(a1, .after=definition) %>%
+  relocate(d_hi, .after=a1)
+
+ses_anchors %>% kable(digits = 3, format = "html", table.attr = "style='width:40%;'")
+```
+
+
+## Ability distribution comparison
+
+What are the ability distributions by SES in the 2PL model?
+
+```{r}
+d_demo <- d_demo %>% left_join(fscores_2pl %>% mutate(data_id = as.numeric(data_id)))
+
+d_demo %>% ggplot(aes(x=ability, fill=ses_group)) + 
+  geom_density(alpha=.3) + 
+  theme_classic()
+```
+
+```{r}
+# get ability scores from sex group model with varying difficulty
+fscores_mg2 <- tibble(data_id = rownames(d_mat[which(!is.na(d_demo$ses_group)),]), 
+                             ability_ses = fscores(mg2, method = "MAP")[,1])
+
+d_demo_ses <- d_demo %>% 
+  filter(!is.na(ses_group)) %>% 
+  left_join(fscores_mg2 %>% mutate(data_id = as.numeric(data_id)))
+
+ggpairs(d_demo_ses, columns = c("age","comprehension","ability","ability_ses"),
+        ggplot2::aes(colour=ses_group, alpha=.5)) + theme_classic()
+```
+
+```{r, echo=F}
+d_demo_ses %>% group_by(ses_group) %>% 
+  summarise(ability_2pl = mean(ability),
+            ability_ses = mean(ability_ses)) %>%
+  kable(digits = 2, format = "html", table.attr = "style='width:30%;'")
+```
