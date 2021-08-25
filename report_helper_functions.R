@@ -1,3 +1,8 @@
+# MIRT FUNCTION HELPERS ---------------------------------------------------
+fit_mod_intuitive <- function(data, groups){
+  multipleGroup(data, 1, itemtype = "Rasch", groups, invariance = "free_var", SE = TRUE, verbose = T)
+}
+
 extract_group_df <- function(group_model, groups=c("Male","Female")) {
   Mit = as_tibble(coef(group_model, simplify=T)[[groups[1]]]$items) %>%
     mutate(definition = rownames(coef(group_model, simplify=T)[[groups[1]]]$items),
@@ -16,11 +21,11 @@ extract_group_df <- function(group_model, groups=c("Male","Female")) {
   return(combo)
 }
 
-get_extreme_item_difficulty_differences <- function(mm) {
+get_extreme_item_difficulty_differences <- function(mm, SD=2) {
   #yfit <- dnorm(mm$d_diff, mean = mean(mm$d_diff), sd = sd(mm$d_diff)) 
   mm <- mm %>% mutate(d_diff = d_g2 - d_g1)
-  max_dif = mean(mm$d_diff) + 2*sd(mm$d_diff)
-  min_dif = mean(mm$d_diff) - 2*sd(mm$d_diff)
+  max_dif = mean(mm$d_diff) + SD*sd(mm$d_diff)
+  min_dif = mean(mm$d_diff) - SD*sd(mm$d_diff)
   mm <- mm %>% mutate(extreme = ifelse((d_diff > max_dif) | (d_diff < min_dif), T, F))
   print(paste("mininum difference:",min_dif, "maximum difference:",max_dif))
   return(mm)
@@ -63,7 +68,7 @@ mod_intuitive_to_draws_df <- function(mod){
 plot_glimmer <- function(mod_intuitive, item_names) {
   draws_df <- mod_intuitive %>% mod_intuitive_to_draws_df()
   names(draws_df) = c("run", item_names)
-  
+
   p_sample <- draws_df %>%
     clean_names() %>%
     gather(var, val, -run) %>%
@@ -74,9 +79,10 @@ plot_glimmer <- function(mod_intuitive, item_names) {
     arrange(mean_val)
   
   middle_index = floor(nrow(word_avg) / 2) # actual middle?
-  
+
+  mid <- sample(6:(nrow(word_avg)-5), 5, replace=F)
   desired_words <- bind_rows(word_avg %>% head(5),
-                             word_avg %>% sample_n(5), # might sample head/tail
+                             word_avg[mid,], # might sample head/tail sample_n(5)
                              word_avg %>% tail(5))
   
   p <- p_sample %>% filter(is.element(var, desired_words$var)) %>%

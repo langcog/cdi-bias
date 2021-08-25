@@ -3,6 +3,9 @@ title: "CDI:WS Production Bias Report"
 author: "Nathan, George, & Mike"
 date: "8/17/2021"
 output: html_document
+fig_width: 3
+fig_height: 3
+fig_align: "center"
 ---
 
 ```{r setup, include=FALSE}
@@ -14,6 +17,11 @@ library(mirt)
 library(janitor)
 library(here)
 require(kableExtra)
+
+library(wordbankr)
+library(ggrepel)
+library(gridExtra)
+library(printr)
 
 # created in GLIMMER_production.R
 load(here("data/en_ws_production.Rdata")) # d_demo, d_mat, en_wg (items)
@@ -32,6 +40,12 @@ We analyze Wordbank CDI Words & Sentences form data from `r nrow(d_demo)` childr
 
 ```{r, sex-table}
 #d_demo <- d_demo %>% mutate(relevel() # remove empty "Other" level?
+d_demo <- d_demo %>% 
+  filter(comprehension!=0, !is.na(sex)) %>% # can't fit children not producing words, or with NA sex in group model
+  arrange(data_id) %>%
+  mutate(eth_group = ifelse(ethnicity=="White", "White", "Nonwhite"),
+         ses_group = 
+           ifelse(is.element(mom_ed, c("None", "Primary", "Some Secondary", "Secondary")), "low", "high"))
 
 table(d_demo$sex) %>% kable(format = "html", table.attr = "style='width:30%;'")
 ```
@@ -46,76 +60,403 @@ For each axis (sex, SES, race/ethnicity)
 3) re-fit IRT model, show new GLIMMER (discuss: does the test look much more fair, or are there new outliers?)
 4) suggested new words from CHILDES (equal frequency for boys/girls) [but we can't do this for SES/race unless CHILDES has demo data]
 
+```{r load data}
+load("data/glimmer_prodWS_models.Rds")
+load(here("data/glimmer_prodWS_model_noExt.Rds")) # add this in once I've saved all the new models
+```
 
 
 ## Sex DIF
 
 ### GLIMMER plots
 
-```{r show-sex-glimmer, fig.width=5, fig.height=5.5, caption="GLIMMER plot for sample of items showing most DIF in both directions, as well as a random sample from the middle."}
-load("data/glimmer_prodWS_models.Rds")
 
-
+```{r show-sex-glimmer,echo= FALSE, warning=FALSE,message=FALSE,error=FALSE, fig.width=3, fig.height=3, fig.cap="GLIMMER plot for sample of items showing most DIF in both directions, as well as a random sample from the middle."}
 
 plot_glimmer(mod_intuitive_sex, colnames(d_mat)[2:ncol(d_mat)])
 
 ```
 
 ### Removing Biased Items
-
-```{r}
+Histogram of Sex Items from GLIMMER
+```{r, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
 mm_sex <- extract_group_df(mod_intuitive_sex, groups=c("Male","Female"))
 sex_hist <- item_difficulty_difference_histogram(mm_sex)
 
-orig_sex <- get_extreme_item_difficulty_differences(mm_sex) # min: -.53 max: 1.06 (mean + 2SD)
+orig_sex <- get_extreme_item_difficulty_differences(mm_sex, 2.25) # min: -.53 max: 1.06 (mean + 2SD) mean: .265
 sex_hist
 ```
 
-```{r sex-diff-table}
-items_to_remove <- orig_sex %>% filter(extreme==T) 
+```{r sex-diff-table, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+sex_items_to_remove <- orig_sex %>% filter(extreme==T) 
 
-items_to_remove %>% filter(extreme==T) %>%
+sex_items_to_remove %>% filter(extreme==T) %>%
   arrange(d_diff) %>% 
-  select(-d_diff_abs, -extreme, -a1) %>%
-  kable(format = "html", digits = 2, table.attr = "style='width:30%;'")
+  select(-d_diff_abs, -extreme, -a1, -group1, -group2, -d_g1, -d_g2) %>%
+  mutate(sex_bias = case_when(d_diff < 0 ~ "Male", d_diff > 0 ~ "Female")) %>%
+  kable(format = "html", digits = 2, table.attr = "style='width:40%;'")
 ```
+List of Sex Items that show DIF outside of the 2SD range.(shows `r nrow(sex_items_to_remove)` items that have DIF)
 
-ToDo: filter items_to_remove out of d_mat, re-run 1PL IRT model
 
 see what the new distribution of item difficulty differences looks like (are there any more outliers?)
 
 ```{r, eval=F}
-# chunk to run once:
-mod_intuitive_sex <- fit_mod_intuitive(d_mat, sex_group)
+d_demo <- d_demo %>% 
+  filter(comprehension!=0, !is.na(sex)) %>% # can't fit children not producing words, or with NA sex in group model
+  arrange(data_id) %>%
+  mutate(eth_group = ifelse(ethnicity=="White", "White", "Nonwhite"),
+         ses_group = 
+           ifelse(is.element(mom_ed, c("None", "Primary", "Some Secondary", "Secondary")), "low", "high"))
+  
+sex_group = as.character(d_demo$sex)
 
-save()
+sex_words <- c(sex_items_to_remove$definition) 
+#remove words
+d_mat_sex <- d_mat[, ! names(d_mat) %in% sex_words, drop = F]
+# there are more IDs in d_mat_sex than in d_demo; remove those
+d_mat_sex <- d_mat_sex %>% filter(is.element(data_id, d_demo$data_id)) %>% arrange(data_id)
+#copied from George's work may not be nessesary here
+sids = d_mat_sex$data_id
+d_mat_sex$data_id = NULL
+d_mat_sex = data.matrix(d_mat_sex)
+row.names(d_mat_sex) = sids
+
+#refit model now with main DIF items removed
+mod_intuitive_sexn <- fit_mod_intuitive(d_mat_sex, sex_group)
+
+plot_glimmer(mod_intuitive_sexn, colnames(d_mat_sex)[2:ncol(d_mat_sex)])
+
+
+```
+```{r show-new-sex-glimmer,echo= FALSE, warning=FALSE,message=FALSE,error=FALSE, fig.width=3, fig.height=3, fig.cap="GLIMMER plot for sample of items showing most DIF in both directions, as well as a random sample from the middle."}
+sex_words <- c(sex_items_to_remove$definition) 
+#remove words
+d_mat_sex <- d_mat[, ! names(d_mat) %in% sex_words, drop = F]
+# there are more IDs in d_mat_sex than in d_demo; remove those
+d_mat_sex <- d_mat_sex %>% filter(is.element(data_id, d_demo$data_id)) %>% arrange(data_id)
+#copied from George's work may not be nessesary here
+sids = d_mat_sex$data_id
+d_mat_sex$data_id = NULL
+d_mat_sex = data.matrix(d_mat_sex)
+row.names(d_mat_sex) = sids
+
+plot_glimmer(mod_intuitive_sexn, colnames(d_mat_sex)[2:ncol(d_mat_sex)])
+
 ```
 
-```{r}
-load()
+Sex Histogram with the DIF Items removed
+```{r, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+mm_sexn <- extract_group_df(mod_intuitive_sexn, groups=c("Male","Female"))
+sex_histn <- item_difficulty_difference_histogram(mm_sexn)
+  
+orig_sexn <- get_extreme_item_difficulty_differences(mm_sexn, 2.25) # min: -.20 max: 0.74 (mean + 2SD) mean: 0.268
+sex_histn
 ```
 
+```{r sex-diff-table-new, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+new_sex_items_to_remove <- orig_sexn %>% filter(extreme==T) 
 
+new_sex_items_to_remove %>% filter(extreme==T) %>%
+  arrange(d_diff) %>% 
+  select(-d_diff_abs, -extreme, -a1, -group1, -group2, -d_g1, -d_g2) %>%
+  mutate(sex_bias = case_when(d_diff < 0 ~ "Male", d_diff > 0 ~ "Female")) %>%
+  kable(format = "html", digits = 2, table.attr = "style='width:40%;'")
+```
+New Sex Items that show DIF (shows `r nrow(new_sex_items_to_remove)` new items that have DIF)
+
+```{r, eval=F}
+
+new_sex_words <- c(new_sex_items_to_remove$definition) 
+all_sex_words <- append(sex_words, new_sex_words)
+#remove words
+d_mat_sex_new <- d_mat[, ! names(d_mat) %in% all_sex_words, drop = F]
+# there are more IDs in d_mat_sex than in d_demo; remove those
+d_mat_sex_new <- d_mat_sex_new %>% filter(is.element(data_id, d_demo$data_id)) %>% arrange(data_id)
+#copied from George's work may not be nessesary here
+sids = d_mat_sex_new$data_id
+d_mat_sex_new$data_id = NULL
+d_mat_sex_new = data.matrix(d_mat_sex_new)
+row.names(d_mat_sex_new) = sids
+
+#refit model now with main DIF items removed
+mod_intuitive_sexn_n <- fit_mod_intuitive(d_mat_sex_new, sex_group)
+
+plot_glimmer(mod_intuitive_sexn_n, colnames(d_mat_sex_new)[2:ncol(d_mat_sex_new)])
+
+
+```
+
+```{r show-nnew-sex-glimmer,echo= FALSE, warning=FALSE,message=FALSE,error=FALSE, fig.width=3, fig.height=3, fig.cap="GLIMMER plot for sample of items showing most DIF in both directions, as well as a random sample from the middle."}
+new_sex_words <- c(new_sex_items_to_remove$definition) 
+all_sex_words <- append(sex_words, new_sex_words)
+#remove words
+d_mat_sex_new <- d_mat[, ! names(d_mat) %in% all_sex_words, drop = F]
+# there are more IDs in d_mat_sex than in d_demo; remove those
+d_mat_sex_new <- d_mat_sex_new %>% filter(is.element(data_id, d_demo$data_id)) %>% arrange(data_id)
+#copied from George's work may not be nessesary here
+sids = d_mat_sex_new$data_id
+d_mat_sex_new$data_id = NULL
+d_mat_sex_new = data.matrix(d_mat_sex_new)
+row.names(d_mat_sex_new) = sids
+
+
+plot_glimmer(mod_intuitive_sexn_n, colnames(d_mat_sex_new)[2:ncol(d_mat_sex_new)])
+
+
+```
+
+Sex Histogram with the DIF Items removed
+```{r 3rd sex hist, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+mm_sexn_n <- extract_group_df(mod_intuitive_sexn_n, groups=c("Male","Female"))
+sex_histn_n <- item_difficulty_difference_histogram(mm_sexn_n)
+  
+orig_sexn_n <- get_extreme_item_difficulty_differences(mm_sexn_n, 2.25) # min: -.20 max: 0.74 (mean + 2SD) mean: 0.268
+sex_histn_n
+```
+From seeing this my take away is that there are more female DIF Items total but that the extreme ones are mostly male.
+```{r sex-words 3rd, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+nnew_sex_items_to_remove <- orig_sexn_n %>% filter(extreme==T) 
+
+nnew_sex_items_to_remove %>% filter(extreme==T) %>%
+  arrange(d_diff) %>% 
+  select(-d_diff_abs, -extreme, -a1, -group1, -group2, -d_g1, -d_g2) %>%
+  mutate(sex_bias = case_when(d_diff < 0 ~ "Male", d_diff > 0 ~ "Female")) %>%
+  kable(format = "html", digits = 2, table.attr = "style='width:40%;'")
+```
+`r nrow(nnew_sex_items_to_remove)` item that now show DIF
 
 ## SES DIF
+```{r, ses-table}
+#d_demo <- d_demo %>% mutate(relevel() # remove empty "Other" level?
 
-```{r ses-table}
+table(d_demo$ses_group) %>% kable(format = "html", table.attr = "style='width:30%;'")
+```
 
+```{r show-ses-glimmer, fig.width=3, fig.height=3, fig.cap="GLIMMER plot for sample of items showing most DIF in both directions, as well as a random sample from the middle."}
+plot_glimmer(mod_intuitive_ses, colnames(d_mat)[2:ncol(d_mat)])
+```
+
+Histogram from SES GLIMMER
+```{r, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+#used this to find out the that the two groups are 0 1 not high low, not sure why
+#groups <- c("0","1")
+#group_model <- mod_intuitive_ses
+#Mit = as_tibble(coef(group_model, simplify=T)[[groups[1]]]$items) %>%
+#    mutate(definition = rownames(coef(group_model, simplify=T)[[groups[1]]]$items),
+#           group1 = groups[1],
+#          group2 = groups[2])
+
+
+
+mm_ses <- extract_group_df(mod_intuitive_ses, groups=c("0","1"))
+ses_hist <- item_difficulty_difference_histogram(mm_ses)
+
+orig_ses <- get_extreme_item_difficulty_differences(mm_ses, 2.25) # min:-0.97  max:1.08  (mean + 2SD) mean:0.051
+ses_hist
+```
+
+```{r ses-diff-table, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+ses_items_to_remove <- orig_ses %>% filter(extreme==T) 
+
+ses_items_to_remove %>% filter(extreme==T) %>%
+  arrange(d_diff) %>% 
+  select(-d_diff_abs, -extreme, -a1, -group1, -group2, -d_g1, -d_g2) %>%
+  mutate(ses_bias = case_when(d_diff < 0 ~ "Low", d_diff > 0 ~ "High")) %>%
+  kable(format = "html", digits = 2, table.attr = "style='width:40%;'")
+```
+List of SES Items that show DIF outside of the 2SD range. (`r nrow(ses_items_to_remove)` items that show DIF)
+
+```{r, eval=F}
+#do we need to have removed NA sex kids for the ses model
+d_demo <- d_demo %>% 
+  filter(comprehension!=0, !is.na(sex)) %>% # can't fit children not producing words, or with NA sex in group model
+  arrange(data_id) %>%
+  mutate(eth_group = ifelse(ethnicity=="White", "White", "Nonwhite"),
+         ses_group = 
+           ifelse(is.element(mom_ed, c("None", "Primary", "Some Secondary", "Secondary")), "low", "high"))
+  
+ses_group = as.character(d_demo$ses_group)
+
+ses_words <- c(ses_items_to_remove$definition) 
+#remove words
+d_mat_ses <- d_mat[, ! names(d_mat) %in% ses_words, drop = F]
+# there are more IDs in d_mat_ses than in d_demo; remove those
+d_mat_ses <- d_mat_ses %>% filter(is.element(data_id, d_demo$data_id)) %>% arrange(data_id)
+#copied from George's work may not be nessesary here
+sids = d_mat_ses$data_id
+d_mat_ses$data_id = NULL
+d_mat_ses = data.matrix(d_mat_ses)
+row.names(d_mat_ses) = sids
+
+#refit model now with main DIF items removed
+mod_intuitive_sesn <- fit_mod_intuitive(d_mat_ses, ses_group)
+
+plot_glimmer(mod_intuitive_sesn, colnames(d_mat_ses)[2:ncol(d_mat_ses)])
+
+
+```
+```{r show-new-ses-glimmer, fig.width=3, fig.height=3, fig.cap="GLIMMER plot for sample of items showing most DIF in both directions, as well as a random sample from the middle."}
+ses_words <- c(ses_items_to_remove$definition) 
+#remove words
+d_mat_ses <- d_mat[, ! names(d_mat) %in% ses_words, drop = F]
+# there are more IDs in d_mat_ses than in d_demo; remove those
+d_mat_ses <- d_mat_ses %>% filter(is.element(data_id, d_demo$data_id)) %>% arrange(data_id)
+#copied from George's work may not be nessesary here
+sids = d_mat_ses$data_id
+d_mat_ses$data_id = NULL
+d_mat_ses = data.matrix(d_mat_ses)
+row.names(d_mat_ses) = sids
+
+plot_glimmer(mod_intuitive_sesn, colnames(d_mat_ses)[2:ncol(d_mat_ses)])
+```
+
+New Histogram with the DIF Items removed 
+```{r, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+#not sure why the groups are now high and low and not 0 and 1
+mm_sesn <- extract_group_df(mod_intuitive_sesn, groups=c("low","high"))
+ses_histn <- item_difficulty_difference_histogram(mm_sesn)
+
+orig_sesn <- get_extreme_item_difficulty_differences(mm_sesn, 2.25) # min:-0.97  max:1.08  (mean + 2SD) mean:0.051
+ses_histn
 ```
 
 
-```{r}
-plot_glimmer(mod_intuitive_ses, colnames(d_mat), plotName="GLIMMER_ses_prodWS")
+```{r ses-diff-table-new, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+new_ses_items_to_remove <- orig_sesn %>% filter(extreme==T) 
 
+new_ses_items_to_remove %>% filter(extreme==T) %>%
+  arrange(d_diff) %>% 
+  select(-d_diff_abs, -extreme, -a1, -group1, -group2, -d_g1, -d_g2) %>%
+  mutate(ses_bias = case_when(d_diff < 0 ~ "Low", d_diff > 0 ~ "High")) %>%
+  kable(format = "html", digits = 2, table.attr = "style='width:40%;'")
 ```
-
+List of new SES Items that show DIF outside of the 2SD range. (shows `r nrow(new_ses_items_to_remove)` new items that have DIF)
 
 ## Race/Ethnicity DIF
+Race is not a stand alone factor; people of each race fall into every combination of the other axes we have analyzed. Perhaps whiteness and SES are highly correlated in our data. Any binerized set of data will have members of each group that are different across another axis. It will perhap be worth while to specify even further such as the effect of white vs. non-white but only amongst high SES kids. 
+
+```{r, eth-table}
+#d_demo <- d_demo %>% mutate(relevel() # remove empty "Other" level?
+
+table(d_demo$eth_group) %>% kable(format = "html", table.attr = "style='width:30%;'")
+```
+
+
+```{r show-eth-glimmer, fig.width=3, fig.height=3, fig.cap="GLIMMER plot for sample of items showing most DIF in both directions, as well as a random sample from the middle."}
+plot_glimmer(mod_intuitive_eth, colnames(d_mat)[2:ncol(d_mat)])
+```
+
+Histogram from ETH GLIMMER
+```{r, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+#used this to find out the that the two groups are 0 1 not high low, not sure why
+#groups <- c("0","1")
+#group_model <- mod_intuitive_eth
+#Mit = as_tibble(coef(group_model, simplify=T)) %>%
+#    mutate(definition = rownames(coef(group_model, simplify=T)[[groups[1]]]$items),
+#           group1 = groups[1],
+#          group2 = groups[2])
+
+
+
+mm_eth <- extract_group_df(mod_intuitive_eth, groups=c("Nonwhite","White"))
+eth_hist <- item_difficulty_difference_histogram(mm_eth)
+
+orig_eth <- get_extreme_item_difficulty_differences(mm_eth, 2.25) # min:-0.97  max:1.08  (mean + 2SD) mean:0.051
+eth_hist
+```
+
+
+```{r eth-diff-table, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+eth_items_to_remove <- orig_eth %>% filter(extreme==T) 
+
+eth_items_to_remove %>% filter(extreme==T) %>%
+  arrange(d_diff) %>% 
+  select(-d_diff_abs, -extreme, -a1, -group1, -group2, -d_g1, -d_g2) %>%
+  mutate(ses_bias = case_when(d_diff < 0 ~ "Non-White", d_diff > 0 ~ "White")) %>%
+  kable(format = "html", digits = 2, table.attr = "style='width:40%;'")
+```
+List of Eth Items that show DIF outside of the 2SD range. (`r nrow(eth_items_to_remove)` that show DIF)
+
+```{r, eval=F}
+#do we need to have removed NA sex kids for the ses model
+d_demo <- d_demo %>% 
+  filter(comprehension!=0, !is.na(sex)) %>% # can't fit children not producing words, or with NA sex in group model
+  arrange(data_id) %>%
+  mutate(eth_group = ifelse(ethnicity=="White", "White", "Nonwhite"),
+         ses_group = 
+           ifelse(is.element(mom_ed, c("None", "Primary", "Some Secondary", "Secondary")), "low", "high"))
+#might need this
+d_demo <- d_demo %>% 
+  filter(!is.na(eth_group)
+
+eth_group = as.character(d_demo$eth_group)
+
+eth_words <- c(eth_items_to_remove$definition) 
+#remove words
+d_mat_eth <- d_mat[, ! names(d_mat) %in% eth_words, drop = F]
+# there are more IDs in d_mat_eth than in d_demo; remove those
+d_mat_eth <- d_mat_eth %>% filter(is.element(data_id, d_demo$data_id)) %>% arrange(data_id)
+#copied from George's work may not be nessesary here
+sids = d_mat_eth$data_id
+d_mat_eth$data_id = NULL
+d_mat_eth = data.matrix(d_mat_eth)
+row.names(d_mat_eth) = sids
+
+#refit model now with main DIF items removed
+mod_intuitive_ethn <- fit_mod_intuitive(d_mat_eth, eth_group)
+#recieved this note: NA values in group removed, along with associated rows in data
+#may need to run the "might need this" line to remove those NA kids ahead of time
+plot_glimmer(mod_intuitive_ethn, colnames(d_mat_eth)[2:ncol(d_mat_eth)])
+
+
+```
+```{r show-new-eth-glimmer, fig.width=3, fig.height=3, fig.cap="GLIMMER plot for sample of items showing most DIF in both directions, as well as a random sample from the middle."}
+eth_words <- c(eth_items_to_remove$definition) 
+#remove words
+d_mat_eth <- d_mat[, ! names(d_mat) %in% eth_words, drop = F]
+# there are more IDs in d_mat_eth than in d_demo; remove those
+d_mat_eth <- d_mat_eth %>% filter(is.element(data_id, d_demo$data_id)) %>% arrange(data_id)
+#copied from George's work may not be nessesary here
+sids = d_mat_eth$data_id
+d_mat_eth$data_id = NULL
+d_mat_eth = data.matrix(d_mat_eth)
+row.names(d_mat_eth) = sids
+
+plot_glimmer(mod_intuitive_ethn, colnames(d_mat_eth)[2:ncol(d_mat_eth)])
+```
+
+New Histogram with the DIF Items removed
+```{r, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+mm_ethn <- extract_group_df(mod_intuitive_ethn, groups=c("Nonwhite","White"))
+eth_histn <- item_difficulty_difference_histogram(mm_ethn)
+
+orig_ethn <- get_extreme_item_difficulty_differences(mm_ethn, 2.25) # min:-0.97  max:1.08  (mean + 2SD) mean:0.051
+eth_histn
+```
+
+
+```{r eth-diff-table-new, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+new_eth_items_to_remove <- orig_ethn %>% filter(extreme==T) 
+
+new_eth_items_to_remove %>% filter(extreme==T) %>%
+  arrange(d_diff) %>% 
+  select(-d_diff_abs, -extreme, -a1, -group1, -group2, -d_g1, -d_g2) %>%
+  mutate(eth_bias = case_when(d_diff < 0 ~ "Non-White", d_diff > 0 ~ "White")) %>%
+  kable(format = "html", digits = 2, table.attr = "style='width:60%;'")
+```
+List of new Eth Items that show DIF outside of the 2SD range. (`r nrow(new_eth_items_to_remove)` that show DIF)
 
 ```{r, race-table}
 # breakdown white/non-white
 ```
 
+```{r, eval=FALSE}
+#save all the new models
+save(mod_intuitive_sexn, mod_intuitive_ethn, mod_intuitive_sesn, mod_intuitive_sexn_n,
+       file="data/glimmer_prodWS_model_noExt.Rds")
+
+```
 
 # Discussion
 
