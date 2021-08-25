@@ -40,6 +40,7 @@ We analyze Wordbank CDI Words & Sentences form data from `r nrow(d_demo)` childr
 
 ```{r, sex-table}
 #d_demo <- d_demo %>% mutate(relevel() # remove empty "Other" level?
+#need this so that d_demo extists in the right form with you knit.
 d_demo <- d_demo %>% 
   filter(comprehension!=0, !is.na(sex)) %>% # can't fit children not producing words, or with NA sex in group model
   arrange(data_id) %>%
@@ -82,7 +83,7 @@ Histogram of Sex Items from GLIMMER
 ```{r, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
 mm_sex <- extract_group_df(mod_intuitive_sex, groups=c("Male","Female"))
 sex_hist <- item_difficulty_difference_histogram(mm_sex)
-
+#added the option to change SD threshold
 orig_sex <- get_extreme_item_difficulty_differences(mm_sex, 2.25) # min: -.53 max: 1.06 (mean + 2SD) mean: .265
 sex_hist
 ```
@@ -102,6 +103,7 @@ List of Sex Items that show DIF outside of the 2SD range.(shows `r nrow(sex_item
 see what the new distribution of item difficulty differences looks like (are there any more outliers?)
 
 ```{r, eval=F}
+#may no longer be nesesary now that its up top and I have already fit the models but I left it for now. 
 d_demo <- d_demo %>% 
   filter(comprehension!=0, !is.na(sex)) %>% # can't fit children not producing words, or with NA sex in group model
   arrange(data_id) %>%
@@ -243,10 +245,6 @@ Histogram from SES GLIMMER
 #groups <- c("0","1")
 #group_model <- mod_intuitive_ses
 #Mit = as_tibble(coef(group_model, simplify=T)[[groups[1]]]$items) %>%
-#    mutate(definition = rownames(coef(group_model, simplify=T)[[groups[1]]]$items),
-#           group1 = groups[1],
-#          group2 = groups[2])
-
 
 
 mm_ses <- extract_group_df(mod_intuitive_ses, groups=c("0","1"))
@@ -268,7 +266,7 @@ ses_items_to_remove %>% filter(extreme==T) %>%
 List of SES Items that show DIF outside of the 2SD range. (`r nrow(ses_items_to_remove)` items that show DIF)
 
 ```{r, eval=F}
-#do we need to have removed NA sex kids for the ses model
+#do we need to have removed NA sex kids for the ses model?
 d_demo <- d_demo %>% 
   filter(comprehension!=0, !is.na(sex)) %>% # can't fit children not producing words, or with NA sex in group model
   arrange(data_id) %>%
