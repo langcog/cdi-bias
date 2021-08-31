@@ -1,4 +1,11 @@
 # MIRT FUNCTION HELPERS ---------------------------------------------------
+#returns the difference between the number of times a words is spoke to boys vs. girls
+freq_dif <- function(data, target_word){
+  boy <- sum(data[(data$target_child_sex == "male")&(data$gloss == target_word),]$count, na.rm=TRUE)
+  girl <- sum(data[(data$target_child_sex == "female")&(data$gloss == target_word),]$count, na.rm=TRUE)
+  return(boy-girl)
+}
+
 fit_mod_intuitive <- function(data, groups){
   multipleGroup(data, 1, itemtype = "Rasch", groups, invariance = "free_var", SE = TRUE, verbose = T)
 }

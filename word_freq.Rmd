@@ -1,0 +1,68 @@
+---
+title: "Word_freq"
+author: "Nathan, George, Mike"
+date: "8/27/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE, cache=FALSE}
+knitr::opts_chunk$set(cache = TRUE, warning = FALSE, message = FALSE)
+library(dplyr)
+library(dbplyr)
+library(wordbankr)
+library(childesr)
+source("report_helper_functions.R")
+```
+
+
+```{r get-data, include=FALSE}
+d_eng_na <- get_transcripts(collection = "Eng-NA")
+head(d_eng_na)
+sex_range <- get_participants(sex = "male", role_exclude = "Target_Child")
+```
+
+```{r wordbank}
+data_mode <- "local"
+languages <- "English"
+admins <- get_administration_data(mode = data_mode) %>%
+  select(language, form, sex, age, data_id) %>%
+  filter(language %in% languages)
+words <- get_item_data(mode = data_mode) %>%
+  filter(type == "word", language %in% languages) %>%
+  select(language, form, lexical_class, category, uni_lemma, definition,
+         item_id) %>%
+  mutate(num_item_id = as.numeric(substr(item_id, 6, nchar(item_id))),
+         definition = tolower(definition))
+```
+
+```{r counts, include=FALSE}
+exc_target_types <- get_types(#target_child = "Adam",
+                          role_exclude = "target_child")
+                          #type = c("dog", "ball"))
+sex_group <- as.character(exc_target_types$target_child_sex)
+
+items <- get_item_data(language = "English (American)", form = "WS")
+CDI_words <- c(items$definition)
+#potential issue in that the words they count include "accidentally" and "called" rather than the general form so we may need to lemmatize all the words in both or something. plus church* and mommy*
+#plus id 120 is the name nathan for the child nathan which is child's_name in CDI but isn't reported as such in the wordbank and "drink (action)" is not recorded as such. 
+target_types <- exc_target_types[exc_target_types$gloss %in% CDI_words, ] 
+#sum the counts for spoken to boys removing the na sex values. 
+#note truck had a huge difference in favor of boys and purse had a very small differnece for girls so I wonder if this is perfect
+word_total <- sum(target_types[target_types$gloss == "nurse",]$count, na.rm=TRUE)
+boy_tmw <- sum(target_types[(target_types$target_child_sex == "male")&(target_types$gloss == "nurse"),]$count, na.rm=TRUE)
+girl_tmw <- sum(target_types[(target_types$target_child_sex == "female")&(target_types$gloss == "nurse"),]$count, na.rm=TRUE)
+#freq_dif returns 
+num <- freq_dif(target_types, "truck")
+```
+
+```{r find words, include=FALSE}
+best_words = c()
+for(word in CDI_words) {
+  if((word %in% target_types$gloss)& (abs(freq_dif(target_types, word)) < 10) ){
+    #print(abs(freq_dif(target_types, word)))
+    best_words <- append(best_words, word)
+  }
+}
+#finds no words that have a difference of 0 exactly 
+```
+
