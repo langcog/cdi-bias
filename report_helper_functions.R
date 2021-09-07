@@ -100,3 +100,130 @@ plot_glimmer <- function(mod_intuitive, item_names) {
   
   return(p)
 }
+
+## childes_new
+lang_map <- read_csv("resources/language_map.csv")
+
+normalize_language <- function(language) {
+  language %>% str_replace(" ", "_") %>% str_to_lower()
+}
+
+convert_lang_stemmer <- function(lang, method = "snowball") {
+  lang_map %>% filter(wordbank == lang) %>% pull(get(method))
+}
+
+transforms <- list(
+  function(s) str_replace_all(s, "(.*) \\(.*\\)", "\\1"), # foo (bar) -> foo
+  function(s) str_replace_all(s, " ", "_"), # foo bar -> foo_bar
+  function(s) str_replace_all(s, " ", "+"), # foo bar -> foo+bar
+  function(s) str_replace_all(s, "(.+) \\1", "\\1") # (foo) bar -> bar
+  #   function(x) paste0(x, "e+moi"),
+  #   function(x) paste0(x, "e-moi"),
+  #   function(x) paste0(x, "+moi"),
+  #   function(x) paste0(x, "-moi"),
+  #   function(x) paste0(x, "ent"),
+  #   function(x) paste0(x, "e-l"),
+  #   function(x) paste0(x, "e-toi"),
+  #   function(x) paste0(x, "-l"),
+  #   function(x) paste0(x, "-toi"),
+  #   function(x) paste0(x, "es-tu"),
+  #   function(x) paste0(x, "s+tu"),
+  #   function(x) paste0(x, "s-moi")
+)
+
+build_special_case_map <- function(lang) {
+  norm_lang <- normalize_language(lang)
+  special_case_file <- glue("resources/{norm_lang}.csv")
+  if (file.exists(special_case_file)) {
+    a<-read_csv(special_case_file, col_names = FALSE) %>%
+      rename(uni_lemma = X1, definition = X2) %>%
+      pivot_longer(-c(uni_lemma, definition),
+                   names_to = "x", values_to = "option") %>%
+      filter(!is.na(option)) %>%
+      select(-x) %>%
+      mutate(language = lang)
+  }
+  else{
+    a<-data.frame(matrix(ncol=4,nrow=0, dimnames=list(NULL, c("uni_lemma", "definition", "option", "language")))) %>%
+      mutate(language = lang, uni_lemma = as.character(uni_lemma), definition = as.character(definition), option = as.character(option) )
+  }
+  return(a)
+}
+
+build_options <- function(language, word, special_cases) {
+  opts <- c(word, special_cases)
+  opts <- c(opts, word %>% str_split("[,/]") %>% unlist()) # "foo, bar", "foo/bar"
+  opts <- c(opts, map(transforms, function(t) t(opts)))
+  opts <- opts %>% unlist() %>% unique() %>% str_trim()
+  stemmer_lang <- convert_lang_stemmer(language)
+  if (!is.na(stemmer_lang)) opts <- c(opts, stem(opts, stemmer_lang))
+  opts <- opts %>% unique()
+}
+
+# construct a mapping from CDI items to various potential realizations of them
+# in CHILDES
+build_uni_lemma_map <- function(uni_lemmas) {
+  special_case_map <- unique(uni_lemmas$language) %>%
+    map_df(build_special_case_map) %>%
+    group_by(language, uni_lemma, definition) %>%
+    summarise(special_cases = list(option))
+  
+  uni_lemmas %>%
+    unnest(items) %>%
+    left_join(special_case_map) %>%
+    mutate(option = pmap(list(language, definition, special_cases),
+                         build_options)) %>%
+    select(language, uni_lemma, option) %>%
+    unnest(option)
+}
+
+##stemmer code move later
+
+# Gets stems for a list of words in a given language.
+# Uses Snowball by default (with special case for Croatian, which
+# uses Steven Koch's implementation of the Zagreb Stemmer)
+# Also allows for hunspell as an alternative method
+
+stem <- function(words, language, method = "snowball") {
+  
+  if (method == "snowball") {
+    
+    if (language %in% SnowballC::getStemLanguages()) {
+      SnowballC::wordStem(words, language)
+      
+    } else if (language == "croatian") {
+      chunk_size <- 1000
+      word_chunks <- split(words, ceiling(seq_along(words) / chunk_size))
+      map(word_chunks, function(word_chunk) {
+        system2("python",
+                args = c("scripts/croatian.py", sprintf('"%s"', word_chunk)),
+                stdout = TRUE)
+      }) %>% unlist()
+      
+    } else {
+      warning(sprintf("language %s not in list of stemmable languages",
+                      language))
+      words
+    }
+    
+  } else if (method == "hunspell") {
+    
+    Sys.setenv(DICPATH = here("resources", "dicts"))
+    
+    if (language %in% hunspell::list_dictionaries()) {
+      lapply(words, function(word) {
+        stem <- hunspell::hunspell_stem(word, dictionary(language))[[1]]
+        return(if (length(stem) == 0) word else stem[1])
+      }) %>% unlist()
+    } else {
+      warning(sprintf("language %s not in list of stemmable languages",
+                      language))
+      words
+    }
+    
+  } else {
+    warning(sprintf("invalid stemming method %s",
+                    method))
+    words
+  }
+}

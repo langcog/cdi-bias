@@ -7,10 +7,11 @@ output: html_document
 
 ```{r setup, include=FALSE, cache=FALSE}
 knitr::opts_chunk$set(cache = TRUE, warning = FALSE, message = FALSE)
-library(dplyr)
+library(tidyverse)
 library(dbplyr)
 library(wordbankr)
 library(childesr)
+library(glue)
 source("report_helper_functions.R")
 ```
 
@@ -22,8 +23,8 @@ sex_range <- get_participants(sex = "male", role_exclude = "Target_Child")
 ```
 
 ```{r wordbank}
-data_mode <- "local"
-languages <- "English"
+data_mode <- "remote"
+languages <- "English (American)"
 admins <- get_administration_data(mode = data_mode) %>%
   select(language, form, sex, age, data_id) %>%
   filter(language %in% languages)
@@ -36,18 +37,86 @@ words <- get_item_data(mode = data_mode) %>%
 ```
 
 ```{r counts, include=FALSE}
+#only english
 exc_target_types <- get_types(#target_child = "Adam",
-                          role_exclude = "target_child")
-                          #type = c("dog", "ball"))
+                          role_exclude = "target_child",
+                          language = "eng")
+                          # type = c("dog", "ball"))
+
 sex_group <- as.character(exc_target_types$target_child_sex)
 
+#have to nest because code expects nested DF
+#uni_lemma and definition are basically the same in english 
 items <- get_item_data(language = "English (American)", form = "WS")
+items_nested <- items %>%
+  filter(type == "word", !str_detect(definition, "name")) %>%
+  mutate(uni_lemma = definition) %>%
+  nest(items = -c(language, uni_lemma))
+uni_lemma_map <- build_uni_lemma_map(items_nested)
+
+# target_types <- exc_target_types[exc_target_types$gloss %in% CDI_words, ]
+
+#groups by sex and words(lower case) so now theres indevisual words with total count per gender. 
+target_type_counts <- exc_target_types %>%
+  filter(!is.na(target_child_sex)) %>%
+  mutate(gloss = str_to_lower(gloss)) %>%
+  group_by(language, gloss, target_child_sex) %>%
+  summarise(count = sum(count))
+
+#stem the gloss(the words in Childes)
+type_counts_stemmed <- target_type_counts %>%
+  mutate(gloss_stem = stem(gloss, convert_lang_stemmer("English (American)")))
+
+#joins the uni_lemmas from CDI with both gloss and stemmed gloss in Childes to get only the overlapping words
+type_counts_mapped <- type_counts_stemmed %>%
+  ungroup() %>%
+  select(-language) %>%
+  inner_join(uni_lemma_map %>% mutate(option = tolower(option)) %>% rename(gloss = option)) %>%
+  inner_join(uni_lemma_map %>% mutate(option = tolower(option)) %>% rename(gloss_stem = option)) %>%
+  select(-language, -gloss_stem)
+
+# TODO: normalize counts (over CDI words or over all of CHILDES? per sex or joined?)
+#re-summarizes by counts 
+type_counts <- type_counts_mapped %>%
+  group_by(target_child_sex, uni_lemma) %>%
+  summarise(count = sum(count))
+
+#finds missing items and makes their counts = 1
+missing_items <- items_nested %>%
+  filter(!(uni_lemma %in% type_counts$uni_lemma)) %>%
+  select(uni_lemma) %>%
+  mutate(female = 1, male = 1)
+
+#adds back in the unfound words with count 1 and adds ones to all other words
+type_counts_smoothed <- type_counts %>%
+  mutate(count = count + 1) %>%
+  pivot_wider(names_from = target_child_sex, values_from = count, values_fill = 1) %>%
+  bind_rows(missing_items) %>%
+  pivot_longer(cols = c(female, male), names_to = "sex", values_to = "count")
+
+# TODO: normalize counts (over CDI words or over all of CHILDES? per sex or joined?)
+#smoothing
+type_freqs <- type_counts_smoothed %>%
+  mutate(freq = log(count / sum(count)))
+
+# saveRDS(type_counts, "data/type_counts.rds")
+# saveRDS(type_freqs, "data/type_freqs.rds")
+
+
+# TODO: this is log ratio of probabilities, if doing log odds ratio transform to odds before taking difference
+type_diffs <- type_freqs %>%
+  select(-count) %>%
+  pivot_wider(names_from = sex, values_from = freq) %>%
+  mutate(freq_ratio = female - male)
+
+qplot(type_diffs$freq_ratio)
+
 CDI_words <- c(items$definition)
 #potential issue in that the words they count include "accidentally" and "called" rather than the general form so we may need to lemmatize all the words in both or something. plus church* and mommy*
 #plus id 120 is the name nathan for the child nathan which is child's_name in CDI but isn't reported as such in the wordbank and "drink (action)" is not recorded as such. 
-target_types <- exc_target_types[exc_target_types$gloss %in% CDI_words, ] 
+#target_types <- exc_target_types[exc_target_types$gloss %in% CDI_words, ] 
 #sum the counts for spoken to boys removing the na sex values. 
-#note truck had a huge difference in favor of boys and purse had a very small differnece for girls so I wonder if this is perfect
+#note truck had a huge difference in favor of boys and purse had a very small difference for girls so I wonder if this is perfect
 word_total <- sum(target_types[target_types$gloss == "nurse",]$count, na.rm=TRUE)
 boy_tmw <- sum(target_types[(target_types$target_child_sex == "male")&(target_types$gloss == "nurse"),]$count, na.rm=TRUE)
 girl_tmw <- sum(target_types[(target_types$target_child_sex == "female")&(target_types$gloss == "nurse"),]$count, na.rm=TRUE)
