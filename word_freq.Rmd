@@ -56,16 +56,33 @@ uni_lemma_map <- build_uni_lemma_map(items_nested)
 
 # target_types <- exc_target_types[exc_target_types$gloss %in% CDI_words, ]
 
-#groups by sex and words(lower case) so now theres indevisual words with total count per gender. 
+#groups by sex and words(lower case) so now theres individual words with total count per gender. 
 target_type_counts <- exc_target_types %>%
   filter(!is.na(target_child_sex)) %>%
   mutate(gloss = str_to_lower(gloss)) %>%
   group_by(language, gloss, target_child_sex) %>%
   summarise(count = sum(count))
+#stem childes words and get counts to use as recomended replacements
 
 #stem the gloss(the words in Childes)
 type_counts_stemmed <- target_type_counts %>%
   mutate(gloss_stem = stem(gloss, convert_lang_stemmer("English (American)")))
+
+#group stemmed words and counts
+childes_replace <- type_counts_stemmed %>%
+  group_by(gloss_stem, target_child_sex) %>%
+  summarise(count = sum(count))
+
+normalized_counts <- childes_replace %>%
+  group_by(target_child_sex) %>%
+  mutate(prob = count/sum(count), 
+         count_per_mil =  prob * 1000000) 
+  
+
+#totals of counts
+total_counts <- childes_replace %>%
+   group_by(target_child_sex) %>%
+   summarize(count = sum(count))
 
 #joins the uni_lemmas from CDI with both gloss and stemmed gloss in Childes to get only the overlapping words
 type_counts_mapped <- type_counts_stemmed %>%
@@ -80,8 +97,11 @@ type_counts_mapped <- type_counts_stemmed %>%
 type_counts <- type_counts_mapped %>%
   group_by(target_child_sex, uni_lemma) %>%
   summarise(count = sum(count))
+  #1 is female 2 is male
+  #mutate(count_per_mil = 1000000 * (count/ifelse(target_child_sex == "male", total_counts$count[2], total_counts$count[1])))
 
 #finds missing items and makes their counts = 1
+#missing mostly stared words like "penis*" and "church*"
 missing_items <- items_nested %>%
   filter(!(uni_lemma %in% type_counts$uni_lemma)) %>%
   select(uni_lemma) %>%
@@ -92,7 +112,10 @@ type_counts_smoothed <- type_counts %>%
   mutate(count = count + 1) %>%
   pivot_wider(names_from = target_child_sex, values_from = count, values_fill = 1) %>%
   bind_rows(missing_items) %>%
-  pivot_longer(cols = c(female, male), names_to = "sex", values_to = "count")
+  pivot_longer(cols = c(female, male), names_to = "sex", values_to = "count") %>%
+  #1 is female 2 is male
+  mutate(count_per_mil = 1000000 * (count/ifelse(sex == "male", total_counts$count[2], total_counts$count[1])))
+
 
 # TODO: normalize counts (over CDI words or over all of CHILDES? per sex or joined?)
 #smoothing
@@ -101,6 +124,8 @@ type_freqs <- type_counts_smoothed %>%
 
 # saveRDS(type_counts, "data/type_counts.rds")
 # saveRDS(type_freqs, "data/type_freqs.rds")
+#saveRDS(normalized_counts, "data/normalized_childes_counts.rds")
+#saveRDS(type_counts_smoothed, "data/type_counts_smoothed.rds")
 
 
 # TODO: this is log ratio of probabilities, if doing log odds ratio transform to odds before taking difference
