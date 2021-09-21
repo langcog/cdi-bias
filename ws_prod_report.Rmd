@@ -129,8 +129,9 @@ mod_intuitive_sexn <- fit_mod_intuitive(d_mat_sex, sex_group)
 
 plot_glimmer(mod_intuitive_sexn, colnames(d_mat_sex)[2:ncol(d_mat_sex)])
 
-
 ```
+
+
 ```{r show-new-sex-glimmer,echo= FALSE, warning=FALSE,message=FALSE,error=FALSE, fig.width=3, fig.height=3, fig.cap="GLIMMER plot for sample of items showing most DIF in both directions, as well as a random sample from the middle."}
 sex_words <- c(sex_items_to_remove$definition) 
 #remove words
@@ -146,6 +147,8 @@ row.names(d_mat_sex) = sids
 plot_glimmer(mod_intuitive_sexn, colnames(d_mat_sex)[2:ncol(d_mat_sex)])
 
 ```
+
+
 
 Sex Histogram with the DIF Items removed
 ```{r, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
@@ -167,6 +170,7 @@ new_sex_items_to_remove %>% filter(extreme==T) %>%
 ```
 New Sex Items that show DIF (shows `r nrow(new_sex_items_to_remove)` new items that have DIF)
 
+
 ```{r, eval=F}
 
 new_sex_words <- c(new_sex_items_to_remove$definition) 
@@ -186,8 +190,9 @@ mod_intuitive_sexn_n <- fit_mod_intuitive(d_mat_sex_new, sex_group)
 
 plot_glimmer(mod_intuitive_sexn_n, colnames(d_mat_sex_new)[2:ncol(d_mat_sex_new)])
 
-
 ```
+
+
 
 ```{r show-nnew-sex-glimmer,echo= FALSE, warning=FALSE,message=FALSE,error=FALSE, fig.width=3, fig.height=3, fig.cap="GLIMMER plot for sample of items showing most DIF in both directions, as well as a random sample from the middle."}
 new_sex_words <- c(new_sex_items_to_remove$definition) 
@@ -216,7 +221,9 @@ sex_histn_n <- item_difficulty_difference_histogram(mm_sexn_n)
 orig_sexn_n <- get_extreme_item_difficulty_differences(mm_sexn_n, 2.25) # min: -.20 max: 0.74 (mean + 2SD) mean: 0.268
 sex_histn_n
 ```
+
 From seeing this my take away is that there are more female DIF Items total but that the extreme ones are mostly male.
+
 ```{r sex-words 3rd, fig.width=3, fig.height=3, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
 nnew_sex_items_to_remove <- orig_sexn_n %>% filter(extreme==T) 
 
@@ -227,6 +234,52 @@ nnew_sex_items_to_remove %>% filter(extreme==T) %>%
   kable(format = "html", digits = 2, table.attr = "style='width:40%;'")
 ```
 `r nrow(nnew_sex_items_to_remove)` item that now show DIF
+
+### Suggesting replacement items
+
+```{r}
+type_freqs = readRDS("data/type_freqs.rds")
+type_counts = readRDS("data/type_counts.rds")
+type_counts_smoothed = readRDS("data/type_counts_smoothed.rds")
+
+type_counts_smoothed <- type_counts_smoothed %>%
+  pivot_wider(id_cols=uni_lemma, names_from=sex, values_from=count_per_mil) %>%
+  mutate(propFemale = female / (female + male),
+         FtoM = female / male)
+
+# how biased are the items we suggest removing in the corpus counts?
+sex_items_to_remove$definition
+
+tmp <- left_join(orig_sex, type_counts_smoothed, by=c("definition"="uni_lemma"))
+
+tmp %>% #filter(extreme==T) %>%
+  ggplot(aes(x=propFemale, y=d_diff, color=extreme)) + 
+  geom_point(alpha=.5) + theme_bw() +
+  ylab("Female - Male Word Difficulty") +
+  xlab("Proportion of Utterances to Females in CHILDES")
+
+subset(tmp, extreme==T & propFemale > .47 & propFemale < .53) # hose & dump
+
+cor.test(tmp$propFemale, tmp$d_diff) # .19, p<.001
+
+
+# for replacements, want equal-frequency by sex (and high-freq overall) words from CHILDES
+normalized_childes_counts = readRDS("data/normalized_childes_counts.rds")
+
+childes_rel_freq <- normalized_childes_counts %>% filter(count_per_mil > 10) %>%
+  pivot_wider(id_cols=gloss_stem, names_from=target_child_sex, values_from=count_per_mil) %>%
+  mutate(propFemale = female / (female + male))
+# 8717 words to choose from
+hist(childes_rel_freq$propFemale)
+mean(childes_rel_freq$propFemale, na.rm=T) # .497
+
+replacements <- childes_rel_freq %>% 
+  filter(propFemale < .51, propFemale > .49) %>%
+  filter(!is.element(gloss_stem, en_ws$definition)) # 182
+```
+
+1. Of the 22 items with extreme sex DIF, only 2 of those fall very close to being equally often spoken to boys and girls ('hose' and 'dump')
+2. There are many items on the CDI with small difficulty difference (DIF) by sex
 
 ## SES DIF
 ```{r, ses-table}
