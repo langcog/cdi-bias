@@ -1,5 +1,5 @@
 ---
-title: "How to Make a Proceedings Paper Submission"
+title: "Investigating Item Bias "
 bibliography: library.bib
 csl: apa6.csl
 document-params: "10pt, letterpaper"
@@ -20,7 +20,7 @@ abstract: >
     shown below.
     
 keywords: >
-    Add your choice of indexing terms or keywords; kindly use a semi-colon; between each term.
+    language development; 
     
 output: cogsci2016::cogsci_paper
 #final-submission: \cogscifinalcopy
@@ -38,45 +38,32 @@ library(png)
 library(grid)
 library(ggplot2)
 library(xtable)
+library(tidyverse)
+
 ```
 
-# General Formatting Instructions 
+# Introduction 
 
-For general information about authoring in markdown, see **[here](http://rmarkdown.rstudio.com/authoring_basics.html).**
+- introduce importance of measuring early language development (e.g., links to later educational outcomes)
+- introduce CDI
+- what is a good measure? 
+- IRT
+- what does between-group bias look like?
 
-The entire content of a paper (including figures, references, and anything else) can be no longer than six pages in the \textbf{initial submission}. In the \textbf{final submission}, the text of the paper, including an author line, must fit on six pages. Up to one additional page can be used for acknowledgements and references.
+- what is our goal for measuring vocabulary? - identifying language delays, predicting later reading, or talking...
+- how you select items influences how well you achieve these goals (and what bias you find)
 
-The text of the paper should be formatted in two columns with an
-overall width of 7 inches (17.8 cm) and length of 9.25 inches (23.5
-cm), with 0.25 inches between the columns. Leave two line spaces
-between the last author listed and the text of the paper; the text of
-the paper (starting with the abstract) should begin no less than 2.75 inches below the top of the
-page. The left margin should be 0.75 inches and the top margin should
-be 1 inch.  \textbf{The right and bottom margins will depend on
-whether you use U.S. letter or A4 paper, so you must be sure to
-measure the width of the printed text.} Use 10~point Times Roman
-with 12~point vertical spacing, unless otherwise specified.
+# Methods
 
-The title should be in 14~point bold font, centered. The title should
-be formatted with initial caps (the first letter of content words
-capitalized and the rest lower case). In the initial submission, the
-phrase ``Anonymous CogSci submission'' should appear below the title,
-centered, in 11~point bold font.  In the final submission, each
-author's name should appear on a separate line, 11~point bold, and
-centered, with the author's email address in parentheses. Under each
-author's name list the author's affiliation and postal address in
-ordinary 10~point type.
+## Dataset
 
-Indent the first line of each paragraph by 1/8~inch (except for the
-first paragraph of a new section). Do not add extra vertical space
-between paragraphs.
+We analyze American English CDI: Words & Sentences administrations from `r nrow(d_demo)` children aged `r min(d_demo$age)` to `r max(d_demo$age)` from Wordbank [@Frank2016].
 
+```{r import-data}
+load(here("data/en_ws_production.Rdata")) # d_demo, d_mat, en_wg (items)
 
-# First-Level Headings
+```
 
-First level headings should be in 12 point , initial caps, bold and
-centered. Leave one line space above the heading and 1/4~line space
-below the heading.
 
 ## Second-Level Headings
 
