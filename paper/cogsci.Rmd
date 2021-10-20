@@ -46,18 +46,25 @@ library(tidyverse)
 
 - introduce importance of measuring early language development (e.g., links to later educational outcomes)
 - introduce CDI
-- what is a good measure? 
-- IRT
+- predictive validity: Fenson et al. 1994, Bornstein et al. 2012, Duff et al. 2015
+
+- discuss potential for bias
 - what does between-group bias look like?
+
+- IRT - what is a good measure? 
+
+## Fundamental DIF Problem
+
 
 - what is our goal for measuring vocabulary? - identifying language delays, predicting later reading, or talking...
 - how you select items influences how well you achieve these goals (and what bias you find)
+We take the approach put forward by @Stenhaug2021: GLIMMER plots based on the 1-parameter logistic are sufficient to identify bias, without potentially obscuring DIF in a more complex model's additional parameters.
 
 # Methods
 
 ## Dataset
 
-We analyze American English CDI: Words & Sentences administrations from `r nrow(d_demo)` children aged `r min(d_demo$age)` to `r max(d_demo$age)` from Wordbank [@Frank2016].
+We analyze American English CDI: Words & Sentences administrations from `r nrow(d_demo)` children aged `r min(d_demo$age)` to `r max(d_demo$age)` from Wordbank [@Frank2016; @Frank2021].
 
 ```{r import-data}
 load(here("data/en_ws_production.Rdata")) # d_demo, d_mat, en_wg (items)
@@ -65,61 +72,20 @@ load(here("data/en_ws_production.Rdata")) # d_demo, d_mat, en_wg (items)
 ```
 
 
-## Second-Level Headings
+### Participants
 
-Second level headings should be 11 point , initial caps, bold, and
-flush left. Leave one line space above the heading and 1/4~ line
-space below the heading.
+```{r}
+sex_tab <- table(d_demo$sex)
 
-### Third-Level Headings
+eth_tab <- table(d_demo$ethnicity)
+```
 
-Third-level headings should be 10 point , initial caps, bold, and flush
-left. Leave one line space above the heading, but no space after the
-heading.
+We use Wordbank data from `r sex_tab["Female"]` female and `r sex_tab["Male"]` male participants, and was unreported for an additional `r sum(is.na(d_demo$sex))` participants.
+<!-- same for eth, SES -->
 
-# Formalities, Footnotes, and Floats
 
-Use standard APA citation format. Citations within the text should
-include the author's last name and year. If the authors' names are
-included in the sentence, place only the year in parentheses, as in
-[-@NewellSimon1972a], but otherwise place the entire reference in
-parentheses with the authors and year separated by a comma
-[@NewellSimon1972a]. List multiple references alphabetically and
-separate them by semicolons [@ChalnickBillman1988a; @NewellSimon1972a]. 
-Use the et. al. construction only after listing all the authors to a
-publication in an earlier reference and for citations with four or
-more authors.
 
-For more information on citations in RMarkdown, see **[here](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html#citations).**
-
-## Footnotes
-
-Indicate footnotes with a number\footnote{Sample of the first
-footnote.} in the text. Place the footnotes in 9 point type at the
-bottom of the page on which they appear. Precede the footnote with a
-horizontal rule.\footnote{Sample of the second footnote.} You can also use 
-markdown formatting to include footnotes using this syntax [^1].
-
-[^1]: Sample of a markdown footnote.
-
-## Figures
-
-All artwork must be very dark for purposes of reproduction and should
-not be hand drawn. Number figures sequentially, placing the figure
-number and caption, in 10 point, after the figure with one line space
-above the caption and one line space below it. If necessary, leave extra white space at
-the bottom of the page to avoid splitting the figure and figure
-caption. You may float figures to the top or bottom of a column, or
-set wide figures across both columns.
-
-## Two-column images
-
-You can read local images using png package for example and plot 
-it like a regular plot using grid.raster from the grid package. 
-With this method you have full control of the size of your image. **Note: Image must be in .png file format for the readPNG function to work.**
-
-You might want to display a wide figure across both columns. To do this, you change the `fig.env` chunk option to `figure*`. To align the image in the center of the page, set `fig.align` option to `center`. To format the width of your caption text, you set the `num.cols.cap` option to `2`.
-
+<!-- goal: make custom glimmer plot in R with high / low bias words -->
 ```{r 2-col-image, fig.env = "figure*", fig.pos = "h", fig.width=4, fig.height=2, fig.align = "center", set.cap.width=T, num.cols.cap=2, fig.cap = "This image spans both columns. And the caption text is limited to 0.8 of the width of the document."}
 img <- png::readPNG("figs/walrus.png")
 grid::grid.raster(img)
