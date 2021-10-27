@@ -39,6 +39,7 @@ library(grid)
 library(ggplot2)
 library(xtable)
 library(tidyverse)
+library(here)
 
 ```
 
@@ -64,25 +65,35 @@ We take the approach put forward by @Stenhaug2021: GLIMMER plots based on the 1-
 
 ## Dataset
 
-We analyze American English CDI: Words & Sentences administrations from `r nrow(d_demo)` children aged `r min(d_demo$age)` to `r max(d_demo$age)` from Wordbank [@Frank2016; @Frank2021].
+
 
 ```{r import-data}
 load(here("data/en_ws_production.Rdata")) # d_demo, d_mat, en_wg (items)
 
+#Add this exclusion to the Analysis 
+removed <- d_demo %>%
+  filter(comprehension!=0)
+#this is the actually d_demo we used so we must use this in our report
+d_demo <- d_demo %>% 
+  #filter(comprehension!=0, !is.na(sex)) %>% # can't fit children not producing words, or with NA sex in group model
+  arrange(data_id) %>%
+  mutate(eth_group = ifelse(ethnicity=="White", "White", "Nonwhite"),
+         ses_group = 
+           ifelse(is.element(mom_ed, c("None", "Primary", "Some Secondary", "Secondary")), "low", "high"))
 ```
-
+We analyze American English CDI: Words & Sentences administrations from `r nrow(d_demo)` children aged `r min(d_demo$age)` to `r max(d_demo$age)` from Wordbank [@Frank2016; @Frank2021].
 
 ### Participants
 
 ```{r}
 sex_tab <- table(d_demo$sex)
-
+ses_tab <- table(d_demo$ses_group)
 eth_tab <- table(d_demo$ethnicity)
+eth2_tab <- table(d_demo$eth_group)
 ```
 
-We use Wordbank data from `r sex_tab["Female"]` female and `r sex_tab["Male"]` male participants, and was unreported for an additional `r sum(is.na(d_demo$sex))` participants.
+Research was conducted over  `r nrow(d_demo)` participants, whose data was parent reported and collected by the Wordbank Project. Unlike other projects Wordback relies on the kindness of others to contribute their data which means that often meta-data for some sets is missing. Even so, the project now has data over 29 different languages on children from ages 8-30 months old, though our study focused entirely on American English and Children 16-30 months.  When they received complete information, the Wordbank data set collected demographic data consisting of Birth Order, Race/Ethnicity, Sex and Mothers Education. For our study we focused on the comparing data between demographic groups on the axis of Sex, Ethnicity and Mothers Education, which was a proxy for social economic status. Out data included `r sex_tab["Female"]` female and `r sex_tab["Male"]` male participants, and an additional `r sum(is.na(d_demo$sex))` participants whose sex remained unreported. In terms of Ethnicity data was recorded from `r eth_tab["White"]` white, `r eth_tab["Asian"]` Asian, `r eth_tab["Black"]` Black, `r eth_tab["Hispanic"]` Hispanic, and `r eth_tab["Other"]` “Other” participants as well as `r sum(is.na(d_demo$ethnicity))` unreported. Given our distribution of ethnicities, for our analysis we split participants into White (`r eth2_tab["White"]`) and Non-White (`r eth2_tab["Nonwhite"]`). Finally, we split participants into high and low SES, of which we had `r ses_tab["high"]` high SES participants, corresponding to mothers' education of some college or higher and `r ses_tab["low"]` Low SES participants. 
 <!-- same for eth, SES -->
-
 
 
 <!-- goal: make custom glimmer plot in R with high / low bias words -->
@@ -154,3 +165,4 @@ the end of the paper.
 \setlength{\parindent}{-0.1in} 
 \setlength{\leftskip}{0.125in}
 \noindent
+
