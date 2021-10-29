@@ -52,7 +52,7 @@
 % \textwidth 16cm
 % \textheight 21cm
 
-\title{Investigating Item Bias}
+\title{Words aren't created equal: Investigating bias on the CDI}
 
 
 \author{{\large \bf Morton Ann Gernsbacher (MAG@Macc.Wisc.Edu)} \\ Department of Psychology, 1202 W. Johnson Street \\ Madison, WI 53706 USA \AND {\large \bf Sharon J.~Derry (SDJ@Macc.Wisc.Edu)} \\ Department of Educational Psychology, 1025 W. Johnson Street \\ Madison, WI 53706 USA}
@@ -63,55 +63,90 @@
 \maketitle
 
 \begin{abstract}
-Include no author information in the initial submission, to facilitate
-blind review. The abstract should be one paragraph, indented 1/8 inch on
-both sides, in 9\textasciitilde point font with single spacing. The
-heading `Abstract' should be 10\textasciitilde point, bold, centered,
-with one line of space below it. This one-paragraph abstract section is
-required only for standard six page proceedings papers. Following the
-abstract should be a blank line, followed by the header `Keywords' and a
-list of descriptive keywords separated by semicolons, all in
-9\textasciitilde point font, as shown below.
+Children's early language skill has been linked to later educational
+outcomes, making it important to accurately measure early language.
+Parent-reported instruments such as the Communicative Development
+Inventories (CDIs) have been shown to provide valid, consistent measures
+of children's aggregate early language skill. However, CDIs are
+predominantly comprised of hundreds of vocabulary items, some of which
+may not be heard (and thus learned) equally often by children of varying
+backgrounds. Here, we use a database of American English CDIs to
+identify words that show strong bias for particular groups of children,
+along the axes of sex (male vs.~female), race/ethnicity (white
+vs.~non-white), and socioeconomic status (high vs.~low). For each axis,
+we identify dozens of strongly biased items, and show that eliminating
+these items reduces the expected ability difference between groups. For
+sex, we consider how to propose replacement words that may show less
+bias, on the basis of their relatively equal frequency in adult speech
+directed to male and female children.
 
 \textbf{Keywords:}
-language development;
+language development; early vocabulary; measuring instrument bias;
 \end{abstract}
 
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
 
-\begin{itemize}
-\item
-  introduce importance of measuring early language development (e.g.,
-  links to later educational outcomes)
-\item
-  introduce CDI
-\item
-  predictive validity: Fenson et al.~1994, Bornstein et al.~2012, Duff
-  et al.~2015
-\item
-  discuss potential for bias
-\item
-  what does between-group bias look like?
-\item
-  IRT - what is a good measure?
-\end{itemize}
+introduce importance of measuring early language development (e.g.,
+links to later educational outcomes)
+
+introduce CDI
+
+predictive validity: Fenson et al.~1994, Bornstein et al.~2012, Duff et
+al.~2015
+
+discuss potential for bias
+
+what does between-group bias look like?
+
+IRT - what is a good measure?
 
 \hypertarget{fundamental-dif-problem}{%
 \subsection{Fundamental DIF Problem}\label{fundamental-dif-problem}}
 
-\begin{itemize}
-\tightlist
-\item
-  what is our goal for measuring vocabulary? - identifying language
-  delays, predicting later reading, or talking\ldots{}
-\item
-  how you select items influences how well you achieve these goals (and
-  what bias you find) We take the approach put forward by
-  (\textbf{Stenhaug2021?}): GLIMMER plots based on the 1-parameter
-  logistic are sufficient to identify bias, without potentially
-  obscuring DIF in a more complex model's additional parameters.
-\end{itemize}
+what is our goal for measuring vocabulary? - identifying language
+delays, predicting later reading, or talking\ldots{}
+
+how you select items influences how well you achieve these goals (and
+what bias you find)
+
+We take the approach put forward by Stenhaug, Frank, \& Domingue (2021):
+GLIMMER plots based on the 1-parameter logistic are sufficient to
+identify bias, without potentially obscuring DIF in a more complex
+model's additional parameters.
+
+Differential item functioning (DIF) is a technique in IRT used to
+identify items that show bias against demographic groups. DIF is a
+statistical characteristic of an item that shows the extent to which the
+item might operate differently or measure varying abilities for
+subgroups and members of separate demographic groups. DIF is, however, a
+challenging metric for identifying bias for a couple reasons. Firstly,
+DIF is extremely hard to accurately root out. The process of finding DIF
+involves using the test you used to do IRT analysis in order to look for
+bias within the very same test. Secondly, the presence of DIF does not
+necessarily indicate the presence of bias; it can indicate that one
+demographic has a higher average ability level than the other. These two
+issues are the basis upon which we get the Fundamental DIF
+Identification problem.
+
+This problem can be be understood through a concrete example that is
+well-known from research on early language learning: consider the fact
+that females show a larger vocabulary than males across early
+development {[}see Frank, Braginsky, Yurovsky, \& Marchman (2021) Ch.
+6?; OTHER REFS{]}. The question however is whether or not girls actually
+have a higher ability level or if the tests have words that are bias
+toward girls ie. are easier for girls, or perhaps the test is biased
+toward boys but the natural ability of girls is enough to overcome that
+bias. To answer this question we need to know the ability levels of
+girls and boys in order to confirm that if a word is learned earlier by
+girls it is simply because of an ability difference rather than a bias
+inherent to the word. The problem arises from the fact that we measure
+ability level using the very same test that we are trying to check for
+biased words. If the boys and girls were of the same ability level this
+wouldn't be an issue but given the evidence showing that girls have a
+higher ability level, we need to know the difference in ability so that
+when we find DIF for a specific word can be sure it is outside of the
+expecting DIF that results naturally from their difference in ability.
 
 \hypertarget{methods}{%
 \section{Methods}\label{methods}}
@@ -120,32 +155,65 @@ language development;
 \subsection{Dataset}\label{dataset}}
 
 We analyze American English CDI: Words \& Sentences administrations from
-5520 children aged 16 to 30 from Wordbank (\textbf{Frank2016?};
-\textbf{Frank2021?}).
+5520 children aged 16 to 30 from Wordbank (Frank, Braginsky, Yurovsky,
+\& Marchman, 2017; Frank et al., 2021).
 
 \hypertarget{participants}{%
 \subsubsection{Participants}\label{participants}}
 
 Research was conducted over 5520 participants, whose data was parent
 reported and collected by the Wordbank Project. Unlike other projects
-Wordback relies on the kindness of others to contribute their data which
+Wordbank relies on the kindness of others to contribute their data which
 means that often meta-data for some sets is missing. Even so, the
 project now has data over 29 different languages on children from ages
 8-30 months old, though our study focused entirely on American English
 and Children 16-30 months. When they received complete information, the
 Wordbank data set collected demographic data consisting of Birth Order,
-Race/Ethnicity, Sex and Mothers Education. For our study we focused on
-the comparing data between demographic groups on the axis of Sex,
-Ethnicity and Mothers Education, which was a proxy for social economic
-status. Out data included 1989 female and 2105 male participants, and an
-additional 1426 participants whose sex remained unreported. In terms of
-Ethnicity data was recorded from 2202 white, 67 Asian, 222 Black, 131
-Hispanic, and 93 ``Other'' participants as well as 2805 unreported.
-Given our distribution of ethnicities, for our analysis we split
-participants into White (2202) and Non-White (513). Finally, we split
-participants into high and low SES, of which we had NA high SES
-participants, corresponding to mothers' education of some college or
-higher and NA Low SES participants.
+Race/Ethnicity, Sex and Mothers Education. We focused on comparing data
+between demographic groups on the axes of Sex, Ethnicity and Mother's
+Education, a proxy for socioeconomic status (henceforth, SES). Our data
+included 1989 female and 2105 male participants, and an additional 1426
+participants whose sex remained unreported. In terms of Ethnicity data
+was recorded from 2202 white, 67 Asian, 222 Black, 131 Hispanic, and 93
+``Other'' participants as well as 2805 unreported. Given our
+distribution of ethnicities, for our analysis we split participants into
+White (2202) and Non-White (513). Finally, we split participants into
+high and low SES, of which we had 4973 high SES participants,
+corresponding to mothers' education of some college or higher and 547
+Low SES participants.
+
+\hypertarget{one-column-images}{%
+\subsection{One-column images}\label{one-column-images}}
+
+\hypertarget{acknowledgements}{%
+\section{Acknowledgements}\label{acknowledgements}}
+
+Place acknowledgments (including funding information) in a section at
+the end of the paper.
+
+\hypertarget{references}{%
+\section{References}\label{references}}
+
+\setlength{\parindent}{-0.1in} 
+\setlength{\leftskip}{0.125in}
+
+\noindent
+
+\hypertarget{refs}{}
+\leavevmode\hypertarget{ref-Frank2017}{}%
+Frank, M. C., Braginsky, M., Yurovsky, D., \& Marchman, V. A. (2017).
+Wordbank: An open repository for developmental vocabulary data.
+\emph{Journal of Child Language}, \emph{44}(3), 677--694.
+
+\leavevmode\hypertarget{ref-Frank2021}{}%
+Frank, M. C., Braginsky, M., Yurovsky, D., \& Marchman, V. A. (2021).
+\emph{Variability and consistency in early language learning: The
+wordbank project}. MIT Press.
+
+\leavevmode\hypertarget{ref-stenhaug2021treading}{}%
+Stenhaug, B., Frank, M. C., \& Domingue, B. (2021). Treading carefully:
+Agnostic identification as the first step of detecting differential item
+functioning.
 
 \bibliographystyle{apacite}
 

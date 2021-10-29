@@ -9,18 +9,21 @@ author-information: >
     \AND {\large \bf Sharon J.~Derry (SDJ@Macc.Wisc.Edu)} \\ Department of Educational Psychology, 1025 W. Johnson Street \\ Madison, WI 53706 USA}
 
 abstract: >
-    Include no author information in the initial submission, to facilitate
-    blind review.  The abstract should be one paragraph, indented 1/8 inch on both sides,
-    in 9~point font with single spacing. The heading 'Abstract'
-    should be 10~point, bold, centered, with one line of space below
-    it. This one-paragraph abstract section is required only for standard
-    six page proceedings papers. Following the abstract should be a blank
-    line, followed by the header 'Keywords' and a list of
-    descriptive keywords separated by semicolons, all in 9~point font, as
-    shown below.
+    Children's early language skill has been linked to later educational outcomes, making
+    it important to accurately measure early language. Parent-reported instruments such as the 
+    Communicative Development Inventories (CDIs) have been shown to provide valid, consistent 
+    measures of children's aggregate early language skill. However, CDIs are predominantly 
+    comprised of hundreds of vocabulary items, some of which may not be heard (and thus learned) 
+    equally often by children of varying backgrounds. Here, we use a database of American English 
+    CDIs to identify words that show strong bias for particular groups of children, along the axes
+    of sex (male vs. female), race/ethnicity (white vs. non-white), and socioeconomic status 
+    (high vs. low). For each axis, we identify dozens of strongly biased items, and show that 
+    eliminating these items reduces the expected ability difference between groups. For sex, we
+    consider how to propose replacement words that may show less bias, on the basis of their 
+    relatively equal frequency in adult speech directed to male and female children.
     
 keywords: >
-    language development; 
+    language development; early vocabulary; measuring instrument bias;
     
 output: cogsci2016::cogsci_paper
 #final-submission: \cogscifinalcopy
@@ -45,20 +48,25 @@ library(here)
 
 # Introduction 
 
-- introduce importance of measuring early language development (e.g., links to later educational outcomes)
-- introduce CDI
-- predictive validity: Fenson et al. 1994, Bornstein et al. 2012, Duff et al. 2015
+introduce importance of measuring early language development (e.g., links to later educational outcomes)
 
-- discuss potential for bias
-- what does between-group bias look like?
+introduce CDI
 
-- IRT - what is a good measure? 
+predictive validity: Fenson et al. 1994, Bornstein et al. 2012, Duff et al. 2015
+
+discuss potential for bias
+
+what does between-group bias look like?
+
+IRT - what is a good measure? 
 
 ## Fundamental DIF Problem
 
 
-- what is our goal for measuring vocabulary? - identifying language delays, predicting later reading, or talking...
-- how you select items influences how well you achieve these goals (and what bias you find)
+what is our goal for measuring vocabulary? - identifying language delays, predicting later reading, or talking...
+
+how you select items influences how well you achieve these goals (and what bias you find)
+
 We take the approach put forward by @stenhaug2021treading: GLIMMER plots based on the 1-parameter logistic are sufficient to identify bias, without potentially obscuring DIF in a more complex model's additional parameters.
 
 Differential item functioning (DIF) is a technique in IRT used to identify items that show bias against demographic groups. 
