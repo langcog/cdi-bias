@@ -23,7 +23,7 @@ abstract: >
     relatively equal frequency in adult speech directed to male and female children.
     
 keywords: >
-    language development; early vocabulary; measuring instrument bias;
+    language acquisition; word learning; measuring instrument bias; development;
     
 output: cogsci2016::cogsci_paper
 #final-submission: \cogscifinalcopy
@@ -48,11 +48,16 @@ library(here)
 
 # Introduction 
 
+Researchers, clinicians, and parents have long been fascinated with measuring and theorizing about the growth of young children's vocabulary.
+Children's early vocabulary growth is assumed to reflect not only their exposure to child-directed speech, but also the varying difficulty of different types of words, and the aptitude of the child -- including potential language deficits.
+For example, @bornstein2016stability found stability in language skills
+
+Children's demographics have also been found to be predictive of their language skills.
+
 introduce importance of measuring early language development (e.g., links to later educational outcomes)
 
-introduce CDI
-
-predictive validity: Fenson et al. 1994, Bornstein et al. 2012, Duff et al. 2015
+The MacArthur-Bates Communicative Development Inventories [CDIs; @Fenson2007] are a set of parent-reported measures of children's productive and receptive language skills, which produce a low-cost and reliable way to estimate children's early language skills [@fenson1994].
+CDIs have shown good predictive validity [e.g., @fenson1994; Bornstein et al. 2012, Duff et al. 2015].
 
 discuss potential for bias
 
@@ -77,18 +82,18 @@ The process of finding DIF involves using the test you used to do IRT analysis i
 Secondly, the presence of DIF does not necessarily indicate the presence of bias; it can indicate that one demographic has a higher average ability level than the other. 
 These two issues are the basis upon which we get the Fundamental DIF Identification problem. 
 
-This problem can be be understood through a concrete example that is well-known from research on early language learning: consider the fact that females show a larger vocabulary than males across early development [see @Frank2021 Ch. 6?; OTHER REFS]. 
+This problem can be be understood through a concrete example that is well-known from research on early language learning: consider the fact that females show a larger vocabulary than males across early development [see @frank2021 Ch. 6?; OTHER REFS]. 
 The question is whether or not females actually have a higher ability level, or if the tests predominantly have words that are easier for females (i.e., biased).
 (It could even be that the test is biased toward males but the language ability of females is large enough to overcome that bias.)
 To address this question, we need to know the ability levels of girls and boys in order to confirm that if a word is learned earlier by girls it is simply because of an ability difference rather than a bias inherent to the word. The problem arises from the fact that we measure ability level using the very same test that we are trying to check for biased words. 
 If the boys and girls were of the same average language ability, this would not be an issue but given the evidence showing that girls have a higher ability level, we need to know the difference in ability so that when we find DIF for a specific word can be sure it is outside of the expecting DIF that results naturally from their difference in ability.
 
+The outline of this paper is as follows.
+First, we will introduce the Wordbank data and the Rasch model we use to analyze the data.
 
 # Methods
 
-## Dataset
-
-
+## Vocabulary Data
 
 ```{r import-data}
 load(here("data/en_ws_production.Rdata")) # d_demo, d_mat, en_wg (items)
@@ -104,7 +109,6 @@ d_demo <- d_demo %>%
          ses_group = 
            ifelse(is.element(mom_ed, c("None", "Primary", "Some Secondary", "Secondary")), "low", "high"))
 ```
-We analyze American English CDI: Words & Sentences administrations from `r nrow(d_demo)` children aged `r min(d_demo$age)` to `r max(d_demo$age)` from Wordbank [@Frank2017; @Frank2021].
 
 ### Participants
 
@@ -115,9 +119,9 @@ eth_tab <- table(d_demo$ethnicity)
 eth2_tab <- table(d_demo$eth_group)
 ```
 
-Research was conducted over `r nrow(d_demo)` participants, whose data was parent reported and collected by the Wordbank Project. 
+
+We analyze parent-reported Wordbank data from `r nrow(d_demo)` American English CDI: Words & Sentences administrations for children `r min(d_demo$age)` to `r max(d_demo$age)` months of age [@frank2017; @frank2021].
 Unlike other projects Wordbank relies on the kindness of others to contribute their data which means that often meta-data for some sets is missing. 
-Even so, the project now has data over 29 different languages on children from ages 8-30 months old, though our study focused entirely on American English and Children 16-30 months. 
 When they received complete information, the Wordbank data set collected demographic data consisting of Birth Order, Race/Ethnicity, Sex and Mothers Education. 
 We focused on comparing data between demographic groups on the axes of Sex, Ethnicity and Mother's Education, a proxy for socioeconomic status (henceforth, SES). 
 Our data included `r sex_tab["Female"]` female and `r sex_tab["Male"]` male participants, and an additional `r sum(is.na(d_demo$sex))` participants whose sex remained unreported. 
@@ -126,13 +130,28 @@ Finally, we split participants into high and low SES, of which we had `r ses_tab
 <!-- same for eth, SES -->
 
 
-<!-- goal: make custom glimmer plot in R with high / low bias words -->
-```{r 2-col-image, fig.env = "figure*", fig.pos = "h", fig.width=4, fig.height=2, fig.align = "center", set.cap.width=T, num.cols.cap=2, fig.cap = "This image spans both columns. And the caption text is limited to 0.8 of the width of the document."}
-#img <- png::readPNG("figs/walrus.png")
-#grid::grid.raster(img)
-```
+## Rasch Model
+
+The Rasch model, also known as the 1-parameter logistic (1PL) model, is the simplest Item Response Theory model, and is thus the easiest to use to investigate potential differences in item function across different groups of participants.
+The goal of the Rasch model is to jointly estimate for each child $j$ a latent ability $\theta_j$, and for each item $i$ a difficulty parameter $b_i$.
+In the model, the probability of child $j$ knowing (i.e., producing or understanding) a given item $i$ is 
+
+$$P_{i}(x_i = 1 | b_{i},\theta_j ) = \frac{1}{1 + e^{-D(\theta_j - b_i )}}$$
+
+where $D$ is a constant scaling parameter ($D=1.702$) which makes the logistic closely match the ogive function in traditional factor analysis [@R-mirt; @reckase2009].
+Child ability ($\theta$) and item difficulty ($b$) distributions are standardized (i.e., mean of 0), and expected to be normally-distributed. 
+Children with high latent ability ($\theta$) will be more likely to produce any given item than children with lower latent ability, and more difficult items will be produced by fewer children (at any given $\theta$) than easier items.
+
+For each demographic dimension (sex, socioeconomic status, and ethnicity) we fit a separate Rasch model for each demographic group.
+
 
 # Results
+
+<!-- put the GLIMMERs side-by-side?
+```{r 2-col-image, fig.env = "figure*", fig.pos = "h", fig.width=4, fig.height=2, fig.align = "center", set.cap.width=T, num.cols.cap=2, fig.cap = "This image spans both columns. And the caption text is limited to 0.8 of the width of the document."}
+
+```
+-->
 
 ```{r sex-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.2, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the sex bias model. Words at the top are easier to learn for females, while those at the bottom are easier for males."}
 #img <- png::readPNG("figs/lab_logo_stanford.png")
