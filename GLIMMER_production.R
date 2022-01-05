@@ -129,18 +129,20 @@ plot_glimmer(mod_intuitive_eth, colnames(d_mat), colnames(d_mat), plotName="GLIM
 # small glimmer plots for paper
 plot_glimmer(mod_intuitive_sex, colnames(d_mat), 
              items_to_plot = c("vagina","tights","dress_object","doll","necklace","pretty","underpants","purse","baby",
-                 "bear","hug","some","over","cookie","tiny","why",
-                 "truck","police","dump","firetruck","bat","hammer","tractor","vroom","penis"), 
+                 "bear","hug","some","over","cookie","tiny","why", # middling bias
+                 "truck","police","dump","firetruck","bat","hammer","tractor","vroom","penis"), # male bias
              plotName="smGLIMMER_sex_prodWS", height=4.5, width=4)
 
 plot_glimmer(mod_intuitive_ses, colnames(d_mat), 
-             items_to_plot = c("gum","walker","so","hate","soda_pop","each","candy","why","can_object",
-                               "game","egg","pizza","touch","crayon","rain","dirty",
+             items_to_plot = c("gum","walker","so","hate","soda_pop","each","candy","why","can_object", # low-SES bias
+                               "game","egg","pizza","touch","crayon","rain","dirty", # middling bias
                                "daddy","cockadoodledoo","moo","duck","woof_woof","uh_oh","vroom","quack_quack","grrr"), 
              plotName="smGLIMMER_ses_prodWS", height=4.5, width=4)
 
 plot_glimmer(mod_intuitive_eth, colnames(d_mat), 
-             items_to_plot = c(), 
+             items_to_plot = c("sofa","so","trash","gum","walker","wish","give_me_five","finish","if", # non-white bias
+                               "hello","quiet","church","leg","dish","story","bicycle",
+                               "moo","bye","uh_oh","all_gone","quack_quack","pets_name","grrr","mommy","daddy"), 
              plotName="smGLIMMER_eth_prodWS", height=4.5, width=4)
 
 # histograms of item difficulty differences
