@@ -88,21 +88,22 @@ draws_df_to_logit_plot <- function(draws_df){
 }
 
 # CREATE GLIMMER PLOT ----------------------------------------------------------
-plot_glimmer <- function(mod_intuitive, item_names, plotName='') {
+plot_glimmer <- function(mod_intuitive, item_names, items_to_plot, plotName='', width=8, height=80) {
   draws_df <- mod_intuitive %>% mod_intuitive_to_draws_df()
   names(draws_df) = c("run", item_names)
   
   
-  p <- draws_df %>%
+  p <- draws_df %>% 
     clean_names() %>%
     gather(var, val, -run) %>%
+    filter(is.element(var, items_to_plot)) %>%
     mutate(var = fct_reorder(var, val)) %>%
     ggplot(aes(x = val, y = var)) +
     ggridges::geom_density_ridges() +
     geom_vline(aes(xintercept=0), linetype='dashed', alpha=.5) +
     labs(x = "", y = "") + theme_classic()
   if(plotName!='') ggsave(paste0(plotName,'.pdf'), 
-                          width=8, height=80, # .2 * length(item_names)
+                          width=width, height=height, # .2 * length(item_names)
                           limitsize = F) 
   return(p)
 }
@@ -121,10 +122,24 @@ run_once <- function() {
 load("data/glimmer_prodWS_models.Rds")
 
 # GLIMMER TIME
-plot_glimmer(mod_intuitive_sex, colnames(d_mat), plotName="GLIMMER_sex_prodWS")
-plot_glimmer(mod_intuitive_ses, colnames(d_mat), plotName="GLIMMER_ses_prodWS")
-plot_glimmer(mod_intuitive_eth, colnames(d_mat), plotName="GLIMMER_eth_prodWS")
+plot_glimmer(mod_intuitive_sex, colnames(d_mat), colnames(d_mat), plotName="GLIMMER_sex_prodWS")
+plot_glimmer(mod_intuitive_ses, colnames(d_mat), colnames(d_mat), plotName="GLIMMER_ses_prodWS")
+plot_glimmer(mod_intuitive_eth, colnames(d_mat), colnames(d_mat), plotName="GLIMMER_eth_prodWS")
 
+# small glimmer plots for paper
+plot_glimmer(mod_intuitive_sex, colnames(d_mat), 
+             items_to_plot = c("vagina","tights","dress_object","doll","necklace","pretty","underpants","purse","baby",
+                 "bear","hug","some","over","cookie","tiny","why",
+                 "truck","police","dump","firetruck","bat","hammer","tractor","vroom","penis"), 
+             plotName="smGLIMMER_sex_prodWS", height=4.5, width=4)
+
+plot_glimmer(mod_intuitive_ses, colnames(d_mat), 
+             items_to_plot = c("gum","walker","so"), 
+             plotName="smGLIMMER_ses_prodWS", height=4.5, width=4)
+
+plot_glimmer(mod_intuitive_eth, colnames(d_mat), 
+             items_to_plot = c(), 
+             plotName="smGLIMMER_eth_prodWS", height=4.5, width=4)
 
 # histograms of item difficulty differences
 
