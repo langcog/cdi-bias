@@ -78,7 +78,10 @@ Secondly, the presence of DIF does not necessarily indicate the presence of bias
 These two issues are the basis upon which we get the Fundamental DIF Identification problem. 
 
 This problem can be be understood through a concrete example that is well-known from research on early language learning: consider the fact that females show a larger vocabulary than males across early development [see @Frank2021 Ch. 6?; OTHER REFS]. 
-The question however is whether or not girls actually have a higher ability level or if the tests have words that are bias toward girls ie. are easier for girls, or perhaps the test is biased toward boys but the natural ability of girls is enough to overcome that bias. To answer this question we need to know the ability levels of girls and boys in order to confirm that if a word is learned earlier by girls it is simply because of an ability difference rather than a bias inherent to the word. The problem arises from the fact that we measure ability level using the very same test that we are trying to check for biased words. If the boys and girls were of the same ability level this wouldn’t be an issue but given the evidence showing that girls have a higher ability level, we need to know the difference in ability so that when we find DIF for a specific word can be sure it is outside of the expecting DIF that results naturally from their difference in ability.
+The question is whether or not females actually have a higher ability level, or if the tests predominantly have words that are easier for females (i.e., biased).
+(It could even be that the test is biased toward males but the language ability of females is large enough to overcome that bias.)
+To address this question, we need to know the ability levels of girls and boys in order to confirm that if a word is learned earlier by girls it is simply because of an ability difference rather than a bias inherent to the word. The problem arises from the fact that we measure ability level using the very same test that we are trying to check for biased words. 
+If the boys and girls were of the same average language ability, this would not be an issue but given the evidence showing that girls have a higher ability level, we need to know the difference in ability so that when we find DIF for a specific word can be sure it is outside of the expecting DIF that results naturally from their difference in ability.
 
 
 # Methods
@@ -112,7 +115,7 @@ eth_tab <- table(d_demo$ethnicity)
 eth2_tab <- table(d_demo$eth_group)
 ```
 
-Research was conducted over  `r nrow(d_demo)` participants, whose data was parent reported and collected by the Wordbank Project. 
+Research was conducted over `r nrow(d_demo)` participants, whose data was parent reported and collected by the Wordbank Project. 
 Unlike other projects Wordbank relies on the kindness of others to contribute their data which means that often meta-data for some sets is missing. 
 Even so, the project now has data over 29 different languages on children from ages 8-30 months old, though our study focused entirely on American English and Children 16-30 months. 
 When they received complete information, the Wordbank data set collected demographic data consisting of Birth Order, Race/Ethnicity, Sex and Mothers Education. 
@@ -129,13 +132,26 @@ Finally, we split participants into high and low SES, of which we had `r ses_tab
 #grid::grid.raster(img)
 ```
 
-## One-column images
+# Results
 
-```{r image, fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=2, fig.height=2, set.cap.width=T, num.cols.cap=1, fig.cap = "One column image."}
+```{r sex-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.2, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the sex bias model. Words at the top are easier to learn for females, while those at the bottom are easier for males."}
 #img <- png::readPNG("figs/lab_logo_stanford.png")
 #grid::grid.raster(img)
+knitr::include_graphics("figs/smGLIMMER_sex_prodWS.pdf")
 ```
 
+
+```{r ses-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the SES bias model. Words at the top are easier to learn for children from low-SES families, while those at the bottom are easier for those from high-SES families."}
+knitr::include_graphics("figs/smGLIMMER_ses_prodWS.pdf")
+```
+
+
+```{r eth-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the ethnicity bias model. Words at the top are easier to learn for children from low-SES families, while those at the bottom are easier for those from high-SES families."}
+knitr::include_graphics("figs/smGLIMMER_eth_prodWS.pdf")
+```
+
+
+# Discussion
 
 
 
