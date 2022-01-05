@@ -134,7 +134,9 @@ plot_glimmer(mod_intuitive_sex, colnames(d_mat),
              plotName="smGLIMMER_sex_prodWS", height=4.5, width=4)
 
 plot_glimmer(mod_intuitive_ses, colnames(d_mat), 
-             items_to_plot = c("gum","walker","so"), 
+             items_to_plot = c("gum","walker","so","hate","soda_pop","each","candy","why","can_object",
+                               "game","egg","pizza","touch","crayon","rain","dirty",
+                               "daddy","cockadoodledoo","moo","duck","woof_woof","uh_oh","vroom","quack_quack","grrr"), 
              plotName="smGLIMMER_ses_prodWS", height=4.5, width=4)
 
 plot_glimmer(mod_intuitive_eth, colnames(d_mat), 
