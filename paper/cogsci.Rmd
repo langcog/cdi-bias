@@ -48,18 +48,22 @@ library(here)
 
 # Introduction 
 
-Researchers, clinicians, and parents have long been fascinated with measuring and theorizing about the growth of young children's vocabulary.
-Children's early vocabulary growth is assumed to reflect not only their exposure to child-directed speech, but also the varying difficulty of different types of words, and the aptitude of the child -- including potential language deficits.
-For example, @bornstein2016stability found stability in language skills
-
-Children's demographics have also been found to be predictive of their language skills.
-
-introduce importance of measuring early language development (e.g., links to later educational outcomes)
+Researchers, clinicians, and parents have long been fascinated with the surprising speed and variability in the growth of young children's vocabulary.
+Children's early vocabulary growth is assumed to reflect not only their exposure to child-directed speech, but also the varying difficulty of different types of words, and individual differences in the aptitude of the child -- including potential language deficits.
+Research has uncovered both within-child consistency in development, as well as significant influence from external factors.
+For example, @bornstein2016stability found stability in core language skills across 10 years of children's development, despite changes in maternal income and education over the study period.
+Yet socioeconomic status (SES) has also been found to be predictive of children's early language skill, and of later educational outcomes [for a review, see @schwab2016].
+Biological factors are also predictive of language skill: first-born children tend to outpace their siblings, and female children tend to have better language skills than their age-matched male counterparts [@fenson1994].
+However, it is also difficult to measure language skill: in any short recording children are unlikely to use all of the words and constructions that they know, and any comprehensive battery of language measures will likely exhaust children's attention span.
 
 The MacArthur-Bates Communicative Development Inventories [CDIs; @Fenson2007] are a set of parent-reported measures of children's productive and receptive language skills, which produce a low-cost and reliable way to estimate children's early language skills [@fenson1994].
 CDIs have shown good predictive validity [e.g., @fenson1994; Bornstein et al. 2012, Duff et al. 2015].
+Due to these good properties, CDIs have been adapted to dozens of languages, and a central repository of CDIs with datasets contributed from all over the world has been created [Wordbank; @frank2017; @frank2021].
+Our focus will be on the vocabulary checklist portion of the CDI Words & Sentences (CDI:WS) form, comprised of 680 items across 22 categories (e.g., animals, vehicles, action words, pronouns) designed to assess the productive vocabulary of children 16 to 30 months of age.
+For each item on the CDI:WS, caregivers are asked to respond whether the target child has been heard to say (i.e. produce) the given item.
+Children's total vocabulary score on the CDI:WS is tightly correlated with other facets of early language (e.g., grammatical competence and gesture), suggesting that the language system is "tightly woven" [@frank2021].
 
-discuss potential for bias
+Together, these desirable properties of CDI:WS vocabulary items have led researchers to 
 
 what does between-group bias look like?
 
