@@ -145,7 +145,9 @@ where $D$ is a constant scaling parameter ($D=1.702$) which makes the logistic c
 Child ability ($\theta$) and item difficulty ($b$) distributions are standardized (i.e., mean of 0), and expected to be normally-distributed. 
 Children with high latent ability ($\theta$) will be more likely to produce any given item than children with lower latent ability, and more difficult items will be produced by fewer children (at any given $\theta$) than easier items.
 
-For each demographic dimension (sex, socioeconomic status, and ethnicity) we fit a separate Rasch model for each demographic group.
+In the multigroup Rasch model, an item's difficulty is allowed to vary depending on which group an individual child belongs to. 
+For example, in the sex-based multigroup model, item $i$'s difficulty is $b_{i}^{female}$ for females, and $b_{i}^{male}$ for males.
+We fitted a multigroup Rasch model for each demographic dimension (sex, socioeconomic status, and ethnicity).
 
 
 # Results
