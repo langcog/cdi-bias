@@ -72,20 +72,13 @@ For example, asking whether a 22-month-old produces the word "ball" is far less 
 
 While it is quite reasonable to expect that some CDI words are easier than others, and even to use these varying difficulties to predict variation in children's language ability, the use of psychometric models highlights the possibility that some CDI items may function differently (i.e., be more/less difficult) for different groups of children.
 The idea that some items on a test may show bias, favoring one group over another, is known as Differential Item Function (DIF; @holland1993differential]. 
-A variety of 
+A variety of statistical methods for detecting DIF have been proposed, and investigations have in several instances identified DIF for many items on tests favoring particular one group over another (e.g., rural vs. urban).
+Our goal here is to test the items on the American CDI:WS for DIF along three main axes: sex (male vs. female), socioeconomic status (low- vs. high-SES), and ethnicity (white vs. non-white).
 
 
-## Fundamental DIF Problem
-
-
-what is our goal for measuring vocabulary? - identifying language delays, predicting later reading, or talking...
-
-how you select items influences how well you achieve these goals (and what bias you find)
 
 We take the approach put forward by @stenhaug2021treading: GLIMMER plots based on the 1-parameter logistic are sufficient to identify bias, without potentially obscuring DIF in a more complex model's additional parameters.
 
-Differential item functioning (DIF) is a technique in IRT used to identify items that show bias against demographic groups. 
-DIF is a statistical characteristic of an item that shows the extent to which the item might operate differently or measure varying abilities for subgroups and members of separate demographic groups. 
 DIF is, however, a challenging metric for identifying bias for a couple reasons. 
 Firstly, DIF is extremely hard to accurately root out. 
 The process of finding DIF involves using the test you used to do IRT analysis in order to look for bias within the very same test. 
@@ -99,7 +92,7 @@ To address this question, we need to know the ability levels of girls and boys i
 If the boys and girls were of the same average language ability, this would not be an issue but given the evidence showing that girls have a higher ability level, we need to know the difference in ability so that when we find DIF for a specific word can be sure it is outside of the expecting DIF that results naturally from their difference in ability.
 
 The outline of this paper is as follows.
-First, we will introduce the Wordbank data and the Rasch model we use to analyze the data.
+First, we will introduce the Wordbank data and the IRT model we use to analyze the data.
 
 # Methods
 
@@ -131,10 +124,10 @@ eth2_tab <- table(d_demo$eth_group)
 
 
 We analyze parent-reported Wordbank data from `r nrow(d_demo)` American English CDI: Words & Sentences administrations for children `r min(d_demo$age)` to `r max(d_demo$age)` months of age [@frank2017; @frank2021].
-Unlike other projects Wordbank relies on the kindness of others to contribute their data which means that often meta-data for some sets is missing. 
-When they received complete information, the Wordbank data set collected demographic data consisting of Birth Order, Race/Ethnicity, Sex and Mothers Education. 
+Full demographic data are not reported in some datasets contributed to Wordbank: sex is available for `r nrow(d_demo)-sum(is.na(d_demo$sex))` children, `r nrow(d_demo)-sum(is.na(d_demo$sex))`.
+
 We focused on comparing data between demographic groups on the axes of Sex, Ethnicity and Mother's Education, a proxy for socioeconomic status (henceforth, SES). 
-Our data included `r sex_tab["Female"]` female and `r sex_tab["Male"]` male participants, and an additional `r sum(is.na(d_demo$sex))` participants whose sex remained unreported. 
+Our data included `r sex_tab["Female"]` female and `r sex_tab["Male"]` male participants.
 In terms of Ethnicity data was recorded from `r eth_tab["White"]` white, `r eth_tab["Asian"]` Asian, `r eth_tab["Black"]` Black, `r eth_tab["Hispanic"]` Hispanic, and `r eth_tab["Other"]` “Other” participants as well as `r sum(is.na(d_demo$ethnicity))` unreported. Given our distribution of ethnicities, for our analysis we split participants into White (`r eth2_tab["White"]`) and Non-White (`r eth2_tab["Nonwhite"]`). 
 Finally, we split participants into high and low SES, of which we had `r ses_tab["high"]` high SES participants, corresponding to mothers' education of some college or higher and `r ses_tab["low"]` Low SES participants. 
 <!-- same for eth, SES -->
