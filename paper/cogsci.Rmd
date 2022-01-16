@@ -157,6 +157,16 @@ To contextualize these results, we also first fitted a baseline Rasch model
 
 # Results
 
+```{r colors}
+# color-blind palette
+cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+sex_colors = cbp1[2:3]
+eth_colors = cbp1[4:5]
+ses_colors = cbp1[6:7]
+```
+
+
 ```{r load-data}
 load(here("data/glimmer_prodWS_models.Rds"))
 load(here("data/eng_Ws_prod_mod_1pl.Rds")) # m0h - baseline Rasch model, with coefs_1pl and fscores_1pl
@@ -184,9 +194,9 @@ eth_m <- d_demo %>% filter(!is.na(eth_group), age<26, age>22) %>%
 # eth_m[2,2:3] - eth_m[1,2:3] # white vs. nonwhite advantage: 0.52 theta, 45
 
 # should we report t-tests? 
-table(subset(d_demo, age>22 & age<26)$sex) # 395 female, 408 male
-table(subset(d_demo, age>22 & age<26)$ses_group) # 1038 high-SES, 140 low-SES
-table(subset(d_demo, age>22 & age<26)$eth_group) # 144 nonwhite, 603 white
+#table(subset(d_demo, age>22 & age<26)$sex) # 395 female, 408 male
+#table(subset(d_demo, age>22 & age<26)$ses_group) # 1038 high-SES, 140 low-SES
+#table(subset(d_demo, age>22 & age<26)$eth_group) # 144 nonwhite, 603 white
 ```
 
 Figure 1 shows children's language ability vs. age by demographic group from the baseline Rasch model, which assumes no DIF.
@@ -199,20 +209,24 @@ The average advantage for white vs. non-white children in this age range is $\th
 ```{r baseline-ability-vs-age, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.3, fig.height=6, set.cap.width=T, num.cols.cap=1, fig.cap = "Language ability vs. age by demographic group, from the Rasch model."}
 p1 <- d_demo %>% filter(!is.na(sex)) %>%
   ggplot(aes(x=jitter(age), y=ability, color=sex)) + 
-  geom_point(alpha=.1) + geom_smooth() + theme_classic() + 
-  xlab("Age (months)") + ylab("Language Ability")
+  geom_point(alpha=.1) + geom_smooth() + theme_classic(base_size=9) + 
+  xlab("Age (months)") + ylab("Language Ability") + 
+  scale_color_discrete(type=sex_colors)
+  #theme(legend.position = "top")
 
 p2 <- d_demo %>% filter(!is.na(ses_group)) %>%
   ggplot(aes(x=jitter(age), y=ability, color=ses_group)) + 
-  geom_point(alpha=.1) + geom_smooth() + theme_classic() + 
+  geom_point(alpha=.1) + geom_smooth() + theme_classic(base_size=9) + 
   xlab("Age (months)") + ylab("Language Ability") +
-  scale_color_discrete(name = "SES") 
+  scale_color_discrete(name = "SES", type=ses_colors) #+ 
+  #theme(legend.position = "top")
 
 p3 <- d_demo %>% filter(!is.na(eth_group)) %>%
   ggplot(aes(x=jitter(age), y=ability, color=eth_group)) + 
-  geom_point(alpha=.1) + geom_smooth() + theme_classic() + 
+  geom_point(alpha=.1) + geom_smooth() + theme_classic(base_size=9) + 
   xlab("Age (months)") + ylab("Language Ability") + 
-  scale_color_discrete(name = "ethnicity")
+  scale_color_discrete(name = "ethnicity", type=eth_colors) #+ 
+  #theme(legend.position = "top")
 
 ggarrange(p1, p2, p3, ncol=1)
 ```
@@ -220,7 +234,7 @@ ggarrange(p1, p2, p3, ncol=1)
 
 
 
-```{r demo-ability}
+```{r demo-ability, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.3, fig.height=5.5, set.cap.width=T, num.cols.cap=1, fig.cap = "Density plots of language ability for children aged 23-25 months, based on the group models."}
 # show density plots of child ability based on group models
 # sex
 sex <- d_demo %>% filter(!is.na(sex), production!=0) %>%
@@ -228,44 +242,55 @@ sex <- d_demo %>% filter(!is.na(sex), production!=0) %>%
 # cor.test(eth$production, eth$theta_eth) # .98
 
 sex_m <- sex %>% group_by(sex) %>%
+  filter(age<26, age>22) %>%
   summarise(ability = mean(theta_sex, na.rm=T))
 
-p1 <- sex %>%
+p1 <- sex %>% filter(age<26, age>22) %>%
   ggplot(aes(x=theta_sex, color=sex, fill=sex)) +
     geom_density(alpha=.2) + theme_classic() + xlab("Ability") + 
-    geom_vline(data=sex_m, aes(xintercept=ability, color=sex))
+    geom_vline(data=sex_m, aes(xintercept=ability, color=sex)) +
+    scale_color_discrete(type=sex_colors) + 
+    scale_fill_discrete(type=sex_colors)
 
 
 # SES
 ses <- d_demo %>% filter(!is.na(ses_group), production!=0) %>%
   mutate(theta_ses = fscores(mod_intuitive_ses)) %>%
+  filter(age<26, age>22) %>%
   rename(SES=ses_group)
 # cor.test(eth$production, eth$theta_eth) # .98
 
 ses_m <- ses %>% group_by(SES) %>%
+  filter(age<26, age>22) %>%
   summarise(ability = mean(theta_ses, na.rm=T))
 
 p2 <- ses %>%
   ggplot(aes(x=theta_ses, color=SES, fill=SES)) +
     geom_density(alpha=.2) + theme_classic() + xlab("Ability") + 
-    geom_vline(data=ses_m, aes(xintercept=ability, color=SES))
+    geom_vline(data=ses_m, aes(xintercept=ability, color=SES)) + 
+    scale_color_discrete(type=ses_colors) +
+    scale_fill_discrete(type=ses_colors)
 
 
 # ethnicity
 eth <- d_demo %>% filter(!is.na(eth_group), production!=0) %>%
   mutate(theta_eth = fscores(mod_intuitive_eth)) %>%
+  filter(age<26, age>22) %>%
   rename(`Ethnic Group`=eth_group)
 # cor.test(eth$production, eth$theta_eth) # .98
 
 eth_m <- eth %>% group_by(`Ethnic Group`) %>%
+  filter(age<26, age>22) %>%
   summarise(ability = mean(theta_eth, na.rm=T))
 
 p3 <- eth %>%
   ggplot(aes(x=theta_eth, color=`Ethnic Group`, fill=`Ethnic Group`)) +
     geom_density(alpha=.2) + theme_classic() + xlab("Ability") + 
-    geom_vline(data=eth_m, aes(xintercept=ability, color=`Ethnic Group`))
+    geom_vline(data=eth_m, aes(xintercept=ability, color=`Ethnic Group`)) + 
+    scale_color_discrete(type=eth_colors) + 
+    scale_fill_discrete(type=eth_colors)
 
-ggarrange(p1, p2, p3)
+ggarrange(p1, p2, p3, ncol=1)
 ```
 
 
