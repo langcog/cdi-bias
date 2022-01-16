@@ -19,7 +19,7 @@ get_production_data <- function() {
   d_demo <- get_administration_data(language = "English (American)", form = "WS")
   
   # subjects not producing any words yet (can't fit model with them)
-  bad_Ss = d_demo[which(d_demo$comprehension==0),]$data_id # 9 bad production Ss
+  bad_Ss = d_demo[which(d_demo$production==0),]$data_id # 9 bad production Ss
   
   d_long_ws <- d_long_ws %>% left_join(en_ws %>% select(num_item_id, definition)) %>%
     filter(!is.na(definition))
@@ -39,7 +39,7 @@ get_production_data <- function() {
 load(here("data/en_ws_production.Rdata")) # d_demo, d_mat, en_wg (items)
 
 d_demo <- d_demo %>% 
-  filter(comprehension!=0, !is.na(sex)) %>% # can't fit children not producing words, or with NA sex in group model
+  filter(production!=0) %>% # can't fit children not producing words, or with NA sex in group model
   arrange(data_id) %>%
   mutate(eth_group = ifelse(ethnicity=="White", "White", "Nonwhite"),
          ses_group = 

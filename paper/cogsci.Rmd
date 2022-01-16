@@ -94,7 +94,10 @@ If the boys and girls were of the same average language ability, this would not 
 
 The outline of this paper is as follows.
 First, we will introduce the Wordbank data and the IRT model we use to analyze the data.
-We then fit the IRT model to each group along each dimension, and examine the parameters for evidence of DIF 
+We then fit the IRT model to each group along each demographic dimension, and examine the parameters for evidence of DIF, noting in particular how many items are significantly biased in favor of each group.
+We identify a set of suspect items to eliminate (or in the future, replace), and provide updated estimates of the effect size of these demographic variables, were the biased items to be eliminated.
+Next, using a corpus of child-directed speech, we examine the extent to which variation in word frequencies heard by boys vs. girls predicts sex-based DIF.
+Finally, we provide recommendations for next steps to be taken to identify and replace biased items on the CDI.
 
 # Methods
 
@@ -152,6 +155,76 @@ We fitted a multigroup Rasch model for each demographic dimension (sex, socioeco
 
 
 # Results
+
+```{r load-data}
+load("../data/glimmer_prodWS_models.Rds")
+
+library(mirt)
+
+mod_intuitive_eth
+mod_intuitive_ses
+mod_intuitive_sex
+```
+
+
+```{r}
+# baseline Rasch model differences in ability by demographic groups
+```
+
+```{r}
+mod_intuitive_ses <- fit_mod_intuitive(d_mat, ses_group)
+```
+
+
+```{r demo-ability}
+# show density plots of child ability based on group models
+# sex
+ses <- d_demo %>% filter(!is.na(sex_group), production!=0) %>%
+  mutate(theta_sex = fscores(mod_intuitive_sex)) %>%
+  rename(`Sex Group`=sex_group)
+# cor.test(eth$production, eth$theta_eth) # .98
+
+sex_m <- sex %>% group_by(`Sex Group`) %>%
+  summarise(ability = mean(theta_sex, na.rm=T))
+
+p1 <- sex %>%
+  ggplot(aes(x=theta_sex, color=`Sex Group`, fill=`Sex Group`)) +
+    geom_density(alpha=.2) + theme_classic() + xlab("Ability") + 
+    geom_vline(data=sex_m, aes(xintercept=ability, color=`Sex Group`))
+
+
+# SES
+ses <- d_demo %>% filter(!is.na(ses_group), production!=0) %>%
+  mutate(theta_ses = fscores(mod_intuitive_ses)) %>%
+  rename(`SES Group`=ses_group)
+# cor.test(eth$production, eth$theta_eth) # .98
+
+ses_m <- ses %>% group_by(`Ethnic Group`) %>%
+  summarise(ability = mean(theta_ses, na.rm=T))
+
+p2 <- ses %>%
+  ggplot(aes(x=theta_ses, color=`SES Group`, fill=`SES Group`)) +
+    geom_density(alpha=.2) + theme_classic() + xlab("Ability") + 
+    geom_vline(data=ses_m, aes(xintercept=ability, color=`SES Group`))
+
+
+# ethnicity
+eth <- d_demo %>% filter(!is.na(eth_group), production!=0) %>%
+  mutate(theta_eth = fscores(mod_intuitive_eth)) %>%
+  rename(`Ethnic Group`=eth_group)
+# cor.test(eth$production, eth$theta_eth) # .98
+
+eth_m <- eth %>% group_by(`Ethnic Group`) %>%
+  summarise(ability = mean(theta_eth, na.rm=T))
+
+p3 <- eth %>%
+  ggplot(aes(x=theta_eth, color=`Ethnic Group`, fill=`Ethnic Group`)) +
+    geom_density(alpha=.2) + theme_classic() + xlab("Ability") + 
+    geom_vline(data=eth_m, aes(xintercept=ability, color=`Ethnic Group`))
+
+ggarrange(p1, p2, p3)
+```
+
 
 <!-- put the GLIMMERs side-by-side?
 ```{r 2-col-image, fig.env = "figure*", fig.pos = "h", fig.width=4, fig.height=2, fig.align = "center", set.cap.width=T, num.cols.cap=2, fig.cap = "This image spans both columns. And the caption text is limited to 0.8 of the width of the document."}
