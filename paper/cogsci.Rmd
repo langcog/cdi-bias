@@ -18,7 +18,7 @@ abstract: >
     comprised of hundreds of vocabulary items, some of which may not be heard (and thus learned) 
     equally often by children of varying backgrounds. Here, we use a database of American English 
     CDIs to identify words that show strong bias for particular groups of children, on dimensions
-    of sex (male vs. female), race/ethnicity (white vs. non-white), and socioeconomic status 
+    of sex (male vs. female), race (white vs. non-white), and socioeconomic status 
     (high vs. low). For each dimension, we identify dozens of strongly biased items, and show that 
     eliminating these items reduces the expected ability difference between groups. For sex, we
     consider how to propose replacement words that may show less bias, on the basis of their 
@@ -47,6 +47,8 @@ library(tidyverse)
 library(here)
 library(mirt)
 library(ggpubr)
+
+theme_set(theme_classic(base_size=10))
 ```
 
 # Introduction 
@@ -77,7 +79,7 @@ While it is quite reasonable to expect that some CDI words are easier than other
 The idea that some items on a test may show bias, favoring one group over another, is known as Differential Item Function (DIF; @holland1993differential]. 
 On any given test, it is clearly undesirable to have more items favoring one group (say, children from rural households) over another (urban children), as the test will overestimate the ability of test-takers in the former (rural) group -- and not because of any underlying mean difference in ability between the groups, but simply because the test is unfair.
 A variety of statistical methods for detecting DIF have been proposed, and investigations have in several instances identified DIF for many items on tests favoring particular one group over another (e.g., rural vs. urban).
-Our goal here is to test the items on the American CDI:WS for DIF along three main axes: sex (male vs. female), socioeconomic status (low- vs. high-SES), and ethnicity (white vs. non-white).
+Our goal here is to test the items on the American CDI:WS for DIF along three main axes: sex (male vs. female), socioeconomic status (low- vs. high-SES), and race (white vs. non-white).
 
 However, DIF is fundamentally difficult to identify for multiple reasons [for an overview, see @stenhaug2021treading].
 First, most techniques to identify DIF rely on defining a set of "anchor" test items that are assumed to be equally difficult (i.e., unbiased) for both groups of interest.
@@ -133,8 +135,8 @@ We analyze parent-reported Wordbank data from `r nrow(d_demo)` American English 
 Full demographic data are not reported in some datasets contributed to Wordbank: sex was available for `r nrow(d_demo)-sum(is.na(d_demo$sex))` children, race/ethnicity was available for `r nrow(d_demo)-sum(is.na(d_demo$ethnicity))` children, and mother's education (a proxy for socioeconomic status; SES) was available for `r nrow(d_demo)-sum(is.na(d_demo$ses_group))` children.
 
 The analysis of sex-based differences included CDI administrations from `r sex_tab["Female"]` female and `r sex_tab["Male"]` male children.
-The analysis of race/ethnicity-based differences included data from `r eth_tab["White"]` white, `r eth_tab["Asian"]` Asian, `r eth_tab["Black"]` Black, `r eth_tab["Hispanic"]` Hispanic, and `r eth_tab["Other"]` "Other" children. 
-For this analysis we categorized participants' race as White (`r eth2_tab["White"]`) or Non-White (`r eth2_tab["Nonwhite"]`). 
+The analysis of race-based differences included data from `r eth_tab["White"]` white, `r eth_tab["Asian"]` Asian, `r eth_tab["Black"]` Black, `r eth_tab["Hispanic"]` Hispanic, and `r eth_tab["Other"]` "Other" children. 
+For this analysis we categorized participants' race/ethnicity as White (`r eth2_tab["White"]`) or Non-white (`r eth2_tab["Nonwhite"]`). 
 For the SES-based analysis, we categorized the `r ses_tab["high"]` children whose mothers had at least some college or more as high-SES, and those whose mothers had at most high school (`r ses_tab["low"]` children) as low-SES. 
 
 
@@ -179,25 +181,33 @@ d_demo <- d_demo %>% left_join(fscores_1pl)
 
 sex_m <- d_demo %>% filter(!is.na(sex), !is.na(ability), age<26, age>22) %>% 
   group_by(sex) %>% summarise(ability=mean(ability),
-                              production=mean(production))
+                              production=mean(production),
+                              n=n()) # 394 female, 408 male
 
 ses_m <- d_demo %>% filter(!is.na(ses_group), !is.na(ability), age<26, age>22) %>% 
   group_by(ses_group) %>% summarise(ability=mean(ability),
-                                    production=mean(production))
+                                    production=mean(production),
+                                    n=n()) # 1014 high-SES, 140 low-SES
 
 eth_m <- d_demo %>% filter(!is.na(eth_group), age<26, age>22) %>% 
   group_by(eth_group) %>% summarise(ability=mean(ability),
-                                    production=mean(production))
+                                    production=mean(production),
+                                    n=n()) # 144 nonwhite, 603 white
 
 # sex_m[1,2:3] - sex_m[2,2:3] # average female vs. male advantage at 23-25 months of age: 0.78 theta, 69 words
 # ses_m[1,2:3] - ses_m[2,2:3] # high vs. low advantage: 0.33 theta, 33 words
 # eth_m[2,2:3] - eth_m[1,2:3] # white vs. nonwhite advantage: 0.52 theta, 45
 
 # should we report t-tests? 
-#table(subset(d_demo, age>22 & age<26)$sex) # 395 female, 408 male
-#table(subset(d_demo, age>22 & age<26)$ses_group) # 1038 high-SES, 140 low-SES
-#table(subset(d_demo, age>22 & age<26)$eth_group) # 144 nonwhite, 603 white
+sex_diff_test = t.test(subset(d_demo, age>22 & age<26 & sex=="Male")$ability,
+       subset(d_demo, age>22 & age<26 & sex=="Female")$ability) # p<.001
+ses_diff_test = t.test(subset(d_demo, age>22 & age<26 & ses_group=="high")$ability,
+       subset(d_demo, age>22 & age<26 & ses_group=="low")$ability) # p=.1 (larger difference at >ages)
+eth_diff_test = t.test(subset(d_demo, age>22 & age<26 & eth_group=="White")$ability,
+       subset(d_demo, age>22 & age<26 & eth_group=="Nonwhite")$ability) # p=.01
 ```
+
+## Demographic effects in baseline Rasch model
 
 Figure 1 shows children's language ability vs. age by demographic group from the baseline Rasch model, which assumes no DIF.
 Although the demographic language ability advantages go in the expected directions (i.e., favoring female, high-SES, and white children), note that magnitude of the differences vary somewhat across the age range, especially for SES and ethnicity.
@@ -233,22 +243,28 @@ ggarrange(p1, p2, p3, ncol=1)
 
 
 
+## Demographic effects in group models
+
+maybe only do this after we've eliminated the most biased items?
 
 ```{r demo-ability, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.3, fig.height=5.5, set.cap.width=T, num.cols.cap=1, fig.cap = "Density plots of language ability for children aged 23-25 months, based on the group models."}
 # show density plots of child ability based on group models
+
+# ToDo: maybe make these violin plots and squeeze all 6 groups side-by-side?
+
 # sex
 sex <- d_demo %>% filter(!is.na(sex), production!=0) %>%
   mutate(theta_sex = fscores(mod_intuitive_sex)) 
 # cor.test(eth$production, eth$theta_eth) # .98
 
-sex_m <- sex %>% group_by(sex) %>%
+sex_m2 <- sex %>% group_by(sex) %>%
   filter(age<26, age>22) %>%
-  summarise(ability = mean(theta_sex, na.rm=T))
-
+  summarise(ability = mean(theta_sex, na.rm=T)) 
+# now Female ability = 0.68, male=0.14
 p1 <- sex %>% filter(age<26, age>22) %>%
   ggplot(aes(x=theta_sex, color=sex, fill=sex)) +
-    geom_density(alpha=.2) + theme_classic() + xlab("Ability") + 
-    geom_vline(data=sex_m, aes(xintercept=ability, color=sex)) +
+    geom_density(alpha=.2) + xlab("Ability") + 
+    geom_vline(data=sex_m2, aes(xintercept=ability, color=sex)) +
     scale_color_discrete(type=sex_colors) + 
     scale_fill_discrete(type=sex_colors)
 
@@ -260,14 +276,14 @@ ses <- d_demo %>% filter(!is.na(ses_group), production!=0) %>%
   rename(SES=ses_group)
 # cor.test(eth$production, eth$theta_eth) # .98
 
-ses_m <- ses %>% group_by(SES) %>%
+ses_m2 <- ses %>% group_by(SES) %>%
   filter(age<26, age>22) %>%
-  summarise(ability = mean(theta_ses, na.rm=T))
-
+  summarise(ability = mean(theta_ses, na.rm=T)) 
+# now high ability=.41, low=.08
 p2 <- ses %>%
   ggplot(aes(x=theta_ses, color=SES, fill=SES)) +
-    geom_density(alpha=.2) + theme_classic() + xlab("Ability") + 
-    geom_vline(data=ses_m, aes(xintercept=ability, color=SES)) + 
+    geom_density(alpha=.2) + xlab("Ability") + 
+    geom_vline(data=ses_m2, aes(xintercept=ability, color=SES)) + 
     scale_color_discrete(type=ses_colors) +
     scale_fill_discrete(type=ses_colors)
 
@@ -279,19 +295,24 @@ eth <- d_demo %>% filter(!is.na(eth_group), production!=0) %>%
   rename(`Ethnic Group`=eth_group)
 # cor.test(eth$production, eth$theta_eth) # .98
 
-eth_m <- eth %>% group_by(`Ethnic Group`) %>%
+eth_m2 <- eth %>% group_by(`Ethnic Group`) %>%
   filter(age<26, age>22) %>%
   summarise(ability = mean(theta_eth, na.rm=T))
-
+# now white=.52, nonwhite=.47 (was .59, .06)
 p3 <- eth %>%
   ggplot(aes(x=theta_eth, color=`Ethnic Group`, fill=`Ethnic Group`)) +
-    geom_density(alpha=.2) + theme_classic() + xlab("Ability") + 
+    geom_density(alpha=.2) + xlab("Ability") + 
     geom_vline(data=eth_m, aes(xintercept=ability, color=`Ethnic Group`)) + 
     scale_color_discrete(type=eth_colors) + 
     scale_fill_discrete(type=eth_colors)
 
+# Note: can extract group parameters:
+# coef(mod_intuitive_eth)$White$GroupPars - but means both 0, just SD varies?
+
 ggarrange(p1, p2, p3, ncol=1)
 ```
+
+
 
 
 <!-- put the GLIMMERs side-by-side?
@@ -299,6 +320,74 @@ ggarrange(p1, p2, p3, ncol=1)
 
 ```
 -->
+
+## Identifying biased CDI items
+
+define GLIMMER
+
+summarize findings
+
+```{r get-dif-dfs}
+extract_group_df <- function(group_model, groups=c("Male","Female")) {
+  Mit = as_tibble(coef(group_model, simplify=T)[[groups[1]]]$items) %>%
+    mutate(definition = rownames(coef(group_model, simplify=T)[[groups[1]]]$items),
+           group1 = groups[1],
+           group2 = groups[2]) %>%
+    select(-g, -u) %>% 
+    rename(d_g1 = d)
+  Fit = as_tibble(coef(group_model, simplify=T)[[groups[2]]]$items) %>%
+    mutate(definition = rownames(coef(group_model, simplify=T)[[groups[2]]]$items)) %>%
+    select(-g, -u) %>%
+    rename(d_g2 = d)
+  
+  combo <- Mit %>% left_join(Fit) %>%
+    mutate(d_diff = d_g2 - d_g1,
+           d_diff_abs = abs(d_diff)) 
+  return(combo)
+}
+
+get_extreme_item_difficulty_differences <- function(mm, sd_thresh=2) {
+  #yfit <- dnorm(mm$d_diff, mean = mean(mm$d_diff), sd = sd(mm$d_diff)) 
+  mm <- mm %>% mutate(d_diff = d_g2 - d_g1)
+  max_dif = mean(mm$d_diff) + sd_thresh*sd(mm$d_diff)
+  min_dif = mean(mm$d_diff) - sd_thresh*sd(mm$d_diff)
+  mm <- mm %>% mutate(extreme = ifelse((d_diff > max_dif) | (d_diff < min_dif), T, F))
+  print(paste("mininum difference:",round(min_dif,3), "maximum difference:",round(max_dif,3)))
+  return(mm)
+}
+
+mm_sex <- extract_group_df(mod_intuitive_sex, groups=c("Male","Female"))
+mm_ses <- extract_group_df(mod_intuitive_ses, groups=c("high","low"))
+mm_eth <- extract_group_df(mod_intuitive_eth, groups=c("Nonwhite","White"))
+
+mm_sex <- get_extreme_item_difficulty_differences(mm_sex) # min: -.53 max: 1.06
+mm_ses <- get_extreme_item_difficulty_differences(mm_ses) # min: -1.13 max: 1.07
+mm_eth <- get_extreme_item_difficulty_differences(mm_eth) # min: -.64 max: 1.56
+
+View(subset(mm_sex, extreme)) # 25 extreme (outside 2sd) - 7 favoring girls, 18 favoring boys
+# possibly underestimating the female advantage?
+View(subset(mm_ses, extreme)) # 39 extreme - 13 favoring low-SES, 26 favoring high-SES
+View(subset(mm_eth, extreme)) # 31 extreme - 11 favoring nonwhite, 20 favoring white
+# overestimating both high-SES and white advantages?
+
+# median sex difference: 
+# median(mm_sex$d_diff) # 0.28
+
+# median SES difference: 
+# median(mm_ses$d_diff) # 0.009 - very small!
+
+# median race difference:
+# median(mm_eth$d_diff) # 0.40 - large!
+
+# report # of items above and below 0 for each demographic?
+
+all_extreme <- rbind(subset(mm_sex, extreme),
+                     subset(mm_ses, extreme),
+                     subset(mm_eth, extreme)) 
+# length(unique(all_extreme$definition)) # 76 - so 19 items extreme on >1 dimension
+# sort(table(all_extreme$definition)) # candy, choo choo, daddy, duck, ... tractor, vroom
+```
+
 
 ```{r sex-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.2, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the sex bias model. Words at the top are easier to learn for females, while those at the bottom are easier for males."}
 #img <- png::readPNG("figs/lab_logo_stanford.png")
@@ -319,7 +408,7 @@ knitr::include_graphics("figs/smGLIMMER_eth_prodWS.pdf")
 
 # Discussion
 
-
+We investigated a popular test of children's early vocabulary for potential demographic bias, examining the distribution of words' estimated difficulties for high- vs. low-SES children, females vs. males, and for white vs. non-white children.
 
 # Acknowledgements
 
