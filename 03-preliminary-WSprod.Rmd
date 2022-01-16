@@ -64,6 +64,21 @@ table(en_ws$category) %>% kable(format = "html", table.attr = "style='width:30%;
 
 We will fit comprehension data from `r nrow(d_demo)` children for the WS form.
 
+## Baseline 1PL model
+
+```{r}
+m0 <- mirt(d_mat %>% filter(rowSums(d_mat)!=0) %>% select(-data_id), 1, "Rasch", 
+           technical=list(NCYCLES=1000))
+
+coefs_1pl <- as_tibble(coef(m0, simplify = TRUE)$items) %>%
+  mutate(definition = rownames(coef(m0, simplify = TRUE)$items))
+fscores_1pl <- tibble(data_id = d_mat %>% filter(rowSums(d_mat)!=0) %>% select(data_id), 
+                             ability = fscores(m0, method = "MAP")[,1])
+
+save(file = here("data/eng_Ws_prod_mod_1pl.Rds"), "m0", "coefs_1pl", "fscores_1pl")
+```
+
+
 ## Fit baseline 2PL model
 
 ```{r, eval=F}
