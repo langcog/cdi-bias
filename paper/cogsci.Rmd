@@ -45,7 +45,8 @@ library(ggplot2)
 library(xtable)
 library(tidyverse)
 library(here)
-
+library(mirt)
+library(ggpubr)
 ```
 
 # Introduction 
@@ -152,60 +153,102 @@ Children with high latent ability ($\theta$) will be more likely to produce any 
 In the multigroup Rasch model, an item's difficulty is allowed to vary depending on which group an individual child belongs to. 
 For example, in the sex-based multigroup model, item $i$'s difficulty is $b_{i}^{female}$ for females, and $b_{i}^{male}$ for males.
 We fitted a multigroup Rasch model for each demographic dimension (sex, socioeconomic status, and ethnicity).
-
+To contextualize these results, we also first fitted a baseline Rasch model 
 
 # Results
 
 ```{r load-data}
-load("../data/glimmer_prodWS_models.Rds")
+load(here("data/glimmer_prodWS_models.Rds"))
+load(here("data/eng_Ws_prod_mod_1pl.Rds")) # m0h - baseline Rasch model, with coefs_1pl and fscores_1pl
+#cor.test(d_demo$production, d_demo$ability) # .972
+d_demo <- d_demo %>% left_join(fscores_1pl)
 
-library(mirt)
+#d_demo %>% filter(!is.na(sex)) %>%
+#  ggplot(aes(x=sex, y=ability)) +
+#  geom_boxplot() + theme_classic()
 
-mod_intuitive_eth
-mod_intuitive_ses
-mod_intuitive_sex
+sex_m <- d_demo %>% filter(!is.na(sex), !is.na(ability), age<26, age>22) %>% 
+  group_by(sex) %>% summarise(ability=mean(ability),
+                              production=mean(production))
+
+ses_m <- d_demo %>% filter(!is.na(ses_group), !is.na(ability), age<26, age>22) %>% 
+  group_by(ses_group) %>% summarise(ability=mean(ability),
+                                    production=mean(production))
+
+eth_m <- d_demo %>% filter(!is.na(eth_group), age<26, age>22) %>% 
+  group_by(eth_group) %>% summarise(ability=mean(ability),
+                                    production=mean(production))
+
+# sex_m[1,2:3] - sex_m[2,2:3] # average female vs. male advantage at 23-25 months of age: 0.78 theta, 69 words
+# ses_m[1,2:3] - ses_m[2,2:3] # high vs. low advantage: 0.33 theta, 33 words
+# eth_m[2,2:3] - eth_m[1,2:3] # white vs. nonwhite advantage: 0.52 theta, 45
+
+# should we report t-tests? 
+table(subset(d_demo, age>22 & age<26)$sex) # 395 female, 408 male
+table(subset(d_demo, age>22 & age<26)$ses_group) # 1038 high-SES, 140 low-SES
+table(subset(d_demo, age>22 & age<26)$eth_group) # 144 nonwhite, 603 white
+```
+
+Figure 1 shows children's language ability vs. age by demographic group from the baseline Rasch model, which assumes no DIF.
+Although the demographic language ability advantages go in the expected directions (i.e., favoring female, high-SES, and white children), note that magnitude of the differences vary somewhat across the age range, especially for SES and ethnicity.
+Thus, although the IRT models are fitted to the entire age range, our comparisons of average ability will focus on the middle of the CDI:WS' intended age range, where there is great variation in the size and composition of children's vocabulary.
+At ages 23-25 months, the average female vs. male advantage is an ability difference of $\theta_{f-m} = 0.78$, amounting to females knowing 69 more words, on average.
+The average advantage for high-SES children at 23-25 months is $\theta_{high-low} = 0.33$, amounting to 33 more produced CDI items.
+The average advantage for white vs. non-white children in this age range is $\theta_{w-nonw} = 0.52$, an average of 45 more produced CDI items.
+
+```{r baseline-ability-vs-age, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.3, fig.height=6, set.cap.width=T, num.cols.cap=1, fig.cap = "Language ability vs. age by demographic group, from the Rasch model."}
+p1 <- d_demo %>% filter(!is.na(sex)) %>%
+  ggplot(aes(x=jitter(age), y=ability, color=sex)) + 
+  geom_point(alpha=.1) + geom_smooth() + theme_classic() + 
+  xlab("Age (months)") + ylab("Language Ability")
+
+p2 <- d_demo %>% filter(!is.na(ses_group)) %>%
+  ggplot(aes(x=jitter(age), y=ability, color=ses_group)) + 
+  geom_point(alpha=.1) + geom_smooth() + theme_classic() + 
+  xlab("Age (months)") + ylab("Language Ability") +
+  scale_color_discrete(name = "SES") 
+
+p3 <- d_demo %>% filter(!is.na(eth_group)) %>%
+  ggplot(aes(x=jitter(age), y=ability, color=eth_group)) + 
+  geom_point(alpha=.1) + geom_smooth() + theme_classic() + 
+  xlab("Age (months)") + ylab("Language Ability") + 
+  scale_color_discrete(name = "ethnicity")
+
+ggarrange(p1, p2, p3, ncol=1)
 ```
 
 
-```{r}
-# baseline Rasch model differences in ability by demographic groups
-```
-
-```{r}
-mod_intuitive_ses <- fit_mod_intuitive(d_mat, ses_group)
-```
 
 
 ```{r demo-ability}
 # show density plots of child ability based on group models
 # sex
-ses <- d_demo %>% filter(!is.na(sex_group), production!=0) %>%
-  mutate(theta_sex = fscores(mod_intuitive_sex)) %>%
-  rename(`Sex Group`=sex_group)
+sex <- d_demo %>% filter(!is.na(sex), production!=0) %>%
+  mutate(theta_sex = fscores(mod_intuitive_sex)) 
 # cor.test(eth$production, eth$theta_eth) # .98
 
-sex_m <- sex %>% group_by(`Sex Group`) %>%
+sex_m <- sex %>% group_by(sex) %>%
   summarise(ability = mean(theta_sex, na.rm=T))
 
 p1 <- sex %>%
-  ggplot(aes(x=theta_sex, color=`Sex Group`, fill=`Sex Group`)) +
+  ggplot(aes(x=theta_sex, color=sex, fill=sex)) +
     geom_density(alpha=.2) + theme_classic() + xlab("Ability") + 
-    geom_vline(data=sex_m, aes(xintercept=ability, color=`Sex Group`))
+    geom_vline(data=sex_m, aes(xintercept=ability, color=sex))
 
 
 # SES
 ses <- d_demo %>% filter(!is.na(ses_group), production!=0) %>%
   mutate(theta_ses = fscores(mod_intuitive_ses)) %>%
-  rename(`SES Group`=ses_group)
+  rename(SES=ses_group)
 # cor.test(eth$production, eth$theta_eth) # .98
 
-ses_m <- ses %>% group_by(`Ethnic Group`) %>%
+ses_m <- ses %>% group_by(SES) %>%
   summarise(ability = mean(theta_ses, na.rm=T))
 
 p2 <- ses %>%
-  ggplot(aes(x=theta_ses, color=`SES Group`, fill=`SES Group`)) +
+  ggplot(aes(x=theta_ses, color=SES, fill=SES)) +
     geom_density(alpha=.2) + theme_classic() + xlab("Ability") + 
-    geom_vline(data=ses_m, aes(xintercept=ability, color=`SES Group`))
+    geom_vline(data=ses_m, aes(xintercept=ability, color=SES))
 
 
 # ethnicity
