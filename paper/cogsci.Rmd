@@ -202,7 +202,6 @@ eth_m <- d_demo %>% filter(!is.na(eth_group), age<26, age>22) %>%
 # eth_m[2,2:3] - eth_m[1,2:3] # white vs. nonwhite advantage: 0.52 theta, 45
 
 # regression - report coefficients again after we cut some items?
-require(lmerTest)
 d_demo$eth_group = factor(d_demo$eth_group, levels=c("Nonwhite","White"))
 d_demo$sex = factor(d_demo$sex, levels=c("Male","Female"))
 d_demo$ses_group = factor(d_demo$ses_group, levels=c("low","high"))
@@ -356,8 +355,8 @@ m0 <- mirt(d_mat_pruned %>% filter(rowSums(d_mat_pruned)!=0) %>% select(-data_id
 coefs_1pl <- as_tibble(coef(m0, simplify = TRUE)$items) %>%
   mutate(definition = rownames(coef(m0, simplify = TRUE)$items))
 fscores_1pl <- tibble(data_id = d_mat_pruned %>% filter(rowSums(d_mat_pruned)!=0) %>% select(data_id), 
-                             ability = fscores(m0, method = "MAP")[,1])
-
+                             ability_pr = fscores(m0, method = "MAP")[,1])
+fscores_1pl$data_id = fscores_1pl$data_id$data_id
 save(file = here("data/eng_Ws_prod_mod_1pl_pruned.Rds"), "m0", "coefs_1pl", "fscores_1pl")
 ```
 
@@ -393,21 +392,30 @@ View(subset(mm_eth, extreme)) # 31 extreme - 11 favoring nonwhite, 20 favoring w
 ```{r load-pruned}
 load(here("data/eng_Ws_prod_mod_1pl_pruned.Rds"))
 
+d_demo <- d_demo %>% left_join(fscores_1pl)
 # join with d_demo, do the demo regressions again..
+
+eth_reg_pr <- summary(lm(ability_pr ~ age_sc * eth_group, data=d_demo))$coefficients # R^2=.48 
+ses_reg_pr <- summary(lm(ability_pr ~ age_sc * ses_group, data=d_demo))$coefficients # R^2=.56
+sex_reg_pr <- summary(lm(ability_pr ~ age_sc * sex, data=d_demo))$coefficients # R^2=.59
+
+#white=.48
+#highSES=0.20
+#female=0.57
 ```
 
 
 We identified 76 CDI items that function quite differently across demographic groups, and chose to prune the 15 items with large difficulty differences for both SES and race. 
+After pruning these 2.2% of CDI:WS items, regressions with each demographic variable (and age, centered) showed smaller effects of SES ($\beta=0.20$ vs. $\beta=0.23$) and race ($\beta=0.48$ vs. $\beta=0.50$), while the effect of sex remained the same.
 
-
-```{r demo-ability, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.3, fig.height=5.5, set.cap.width=T, num.cols.cap=1, fig.cap = "Density plots of language ability for children aged 23-25 months, based on the group models."}
-# show density plots of child ability based on group models
+```{r demo-ability, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.3, fig.height=5.5, set.cap.width=T, num.cols.cap=1, fig.cap = "Density plots of language ability for children aged 23-25 months using the pruned model."}
 
 # ToDo: maybe make these violin plots and squeeze all 6 groups side-by-side?
 
 # sex
 sex <- d_demo %>% filter(!is.na(sex), production!=0) %>%
-  mutate(theta_sex = fscores(mod_intuitive_sex)) 
+  mutate(theta_sex = ability_pr)
+  #mutate(theta_sex = fscores(mod_intuitive_sex)) 
 # cor.test(eth$production, eth$theta_eth) # .98
 
 sex_m2 <- sex %>% group_by(sex) %>%
@@ -424,7 +432,8 @@ p1 <- sex %>% filter(age<26, age>22) %>%
 
 # SES
 ses <- d_demo %>% filter(!is.na(ses_group), production!=0) %>%
-  mutate(theta_ses = fscores(mod_intuitive_ses)) %>%
+  #mutate(theta_ses = fscores(mod_intuitive_ses)) %>%
+  mutate(theta_ses = ability_pr) %>%
   filter(age<26, age>22) %>%
   rename(SES=ses_group)
 # cor.test(eth$production, eth$theta_eth) # .98
@@ -443,7 +452,8 @@ p2 <- ses %>%
 
 # ethnicity
 eth <- d_demo %>% filter(!is.na(eth_group), production!=0) %>%
-  mutate(theta_eth = fscores(mod_intuitive_eth)) %>%
+  #mutate(theta_eth = fscores(mod_intuitive_eth)) %>%
+  mutate(theta_eth = ability_pr) %>%
   filter(age<26, age>22) %>%
   mutate(Race=eth_group)
 # cor.test(eth$production, eth$theta_eth) # .98
