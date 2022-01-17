@@ -70,7 +70,7 @@ Due to these desirable properties, CDIs have been adapted to dozens of languages
 
 [^1]: The CDI: Words and Gestures form includes a subset of the CDI:WS items and targets children 12 to 18 months of age, measuring both comprehension and production.
 
-Inspired by the utility and widespread use of the CDI, researchers have recently been using psychometric models on CDI data to construct short, adaptive tests to reliably assess language ability using only a small subset of the CDI items [e.g., @mayor2019, @kachergis2021cat].
+Inspired by the utility and widespread use of the CDI, researchers have recently been using psychometric models on CDI data to construct short, adaptive tests to reliably assess language ability using only a small subset of the CDI items [e.g., @mayor2019; @kachergis2021cat].
 These psychometric models typically come from the Item-Response Theory (IRT) framework [@Baker2001], which assumes that not only test-takers (here, children) have normally-distributed ability, but that items (words on the CDI) have normally-distributed difficulty.
 The very efficacy of these IRT-based models depends on words varying in difficulty, and hence being more/less informative of the ability level of different individuals.
 For example, asking whether a 22-month-old produces the word "ball" is far less informative of that child's language ability than asking whether they produce "table", as 96% of 22-month-olds can produce the former, while only 47% produce the latter.
@@ -86,6 +86,9 @@ First, most techniques to identify DIF rely on defining a set of "anchor" test i
 Identifying anchor items is at best fraught when there may in fact be a difference in ability between groups (e.g., the female language advantage), and is further confounded when the magnitude of this ability difference is unknown.
 A reason that DIF is particularly tricky in measuring children's early language ability is that there is a finite universe of early-learned words to choose from--and we may expect many of them to be biased for various environmental reasons (e.g., children in Florida may not use mittens or skis).
 Hence, the presence of DIF on a wide variety of items may not indicate the presence of bias; it could indicate that one demographic has a higher average ability level than the other.
+For example, let male language ability be drawn from a standard normal $\mu_{male} ~ N(0,1)$, with female language ability slightly higher, on average ($\mu_{female} = \mu_{male} + 0.1$).
+Then we would expect items to be an average of $0.1$ easier for females than for males, and we might identify items that are instead easier for males than females as showing undesirable DIF.
+And yet, without knowing the actual ability difference between two demographic groups--for which we also rely upon our tests, it is difficult to adjudicate which items show DIF, and which do not.
 
 <!--
 This problem can be be understood through a concrete example that is well-known from research on early language learning: consider the fact that females show a larger vocabulary than males across early development [see @frank2021 Ch. 6?; OTHER REFS]. 
@@ -96,10 +99,10 @@ If the boys and girls were of the same average language ability, this would not 
 -->
 
 The outline of this paper is as follows.
-First, we will introduce the Wordbank data and the IRT model we use to analyze the data.
-We then fit the IRT model to each group along each demographic dimension, and examine the parameters for evidence of DIF, noting in particular how many items are significantly biased in favor of each group.
+First, we introduce the Wordbank data and the IRT model, and use it examine the overall size of demographic differences in early word learning.
+We then fit the IRT model to each group along each demographic dimension, and examine the item parameters for evidence of DIF, noting in particular how many items are significantly biased in favor of each group.
 We identify a set of suspect items to eliminate (or in the future, replace), and provide updated estimates of the effect size of these demographic variables, were the biased items to be eliminated.
-Next, using a corpus of child-directed speech, we examine the extent to which variation in word frequencies heard by boys vs. girls predicts sex-based DIF.
+<!--Next, using a corpus of child-directed speech, we examine the extent to which variation in word frequencies heard by boys vs. girls predicts sex-based DIF.-->
 Finally, we provide recommendations for next steps to be taken to identify and replace biased items on the CDI.
 
 # Methods
@@ -351,13 +354,13 @@ extract_group_df <- function(group_model, groups=c("Male","Female")) {
   return(combo)
 }
 
-get_extreme_item_difficulty_differences <- function(mm, sd_thresh=2) {
+get_extreme_item_difficulty_differences <- function(mm, sd_thresh=2, verbose=F) {
   #yfit <- dnorm(mm$d_diff, mean = mean(mm$d_diff), sd = sd(mm$d_diff)) 
   mm <- mm %>% mutate(d_diff = d_g2 - d_g1)
   max_dif = mean(mm$d_diff) + sd_thresh*sd(mm$d_diff)
   min_dif = mean(mm$d_diff) - sd_thresh*sd(mm$d_diff)
   mm <- mm %>% mutate(extreme = ifelse((d_diff > max_dif) | (d_diff < min_dif), T, F))
-  print(paste("mininum difference:",round(min_dif,3), "maximum difference:",round(max_dif,3)))
+  if(verbose) print(paste("mininum difference:",round(min_dif,3), "maximum difference:",round(max_dif,3)))
   return(mm)
 }
 
@@ -368,12 +371,6 @@ mm_eth <- extract_group_df(mod_intuitive_eth, groups=c("Nonwhite","White"))
 mm_sex <- get_extreme_item_difficulty_differences(mm_sex) # min: -.53 max: 1.06
 mm_ses <- get_extreme_item_difficulty_differences(mm_ses) # min: -1.13 max: 1.07
 mm_eth <- get_extreme_item_difficulty_differences(mm_eth) # min: -.64 max: 1.56
-
-View(subset(mm_sex, extreme)) # 25 extreme (outside 2sd) - 7 favoring girls, 18 favoring boys
-# possibly underestimating the female advantage?
-View(subset(mm_ses, extreme)) # 39 extreme - 13 favoring low-SES, 26 favoring high-SES
-View(subset(mm_eth, extreme)) # 31 extreme - 11 favoring nonwhite, 20 favoring white
-# overestimating both high-SES and white advantages?
 
 # median sex difference: 
 # median(mm_sex$d_diff) # 0.28
@@ -392,6 +389,15 @@ all_extreme <- rbind(subset(mm_sex, extreme),
 # length(unique(all_extreme$definition)) # 76 - so 19 items extreme on >1 dimension
 # sort(table(all_extreme$definition)) # candy, choo choo, daddy, duck, ... tractor, vroom
 ```
+
+```{r, eval=F, include=F}
+View(subset(mm_sex, extreme)) # 25 extreme (outside 2sd) - 7 favoring girls, 18 favoring boys
+# possibly underestimating the female advantage?
+View(subset(mm_ses, extreme)) # 39 extreme - 13 favoring low-SES, 26 favoring high-SES
+View(subset(mm_eth, extreme)) # 31 extreme - 11 favoring nonwhite, 20 favoring white
+# overestimating both high-SES and white advantages?
+```
+
 
 
 ```{r sex-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.2, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the sex bias model. Words at the top are easier to learn for females, while those at the bottom are easier for males."}
