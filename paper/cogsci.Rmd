@@ -201,23 +201,36 @@ eth_m <- d_demo %>% filter(!is.na(eth_group), age<26, age>22) %>%
 # ses_m[1,2:3] - ses_m[2,2:3] # high vs. low advantage: 0.33 theta, 33 words
 # eth_m[2,2:3] - eth_m[1,2:3] # white vs. nonwhite advantage: 0.52 theta, 45
 
-# should we report t-tests? 
-sex_diff_test = t.test(subset(d_demo, age>22 & age<26 & sex=="Male")$ability,
-       subset(d_demo, age>22 & age<26 & sex=="Female")$ability) # p<.001
-ses_diff_test = t.test(subset(d_demo, age>22 & age<26 & ses_group=="high")$ability,
-       subset(d_demo, age>22 & age<26 & ses_group=="low")$ability) # p=.1 (larger difference at >ages)
-eth_diff_test = t.test(subset(d_demo, age>22 & age<26 & eth_group=="White")$ability,
-       subset(d_demo, age>22 & age<26 & eth_group=="Nonwhite")$ability) # p=.01
+# regression - report coefficients again after we cut some items?
+require(lmerTest)
+d_demo$eth_group = factor(d_demo$eth_group, levels=c("Nonwhite","White"))
+d_demo$sex = factor(d_demo$sex, levels=c("Male","Female"))
+d_demo$ses_group = factor(d_demo$ses_group, levels=c("low","high"))
+d_demo <- d_demo %>% mutate(age_sc = scale(age, scale=F))
+eth_reg <- summary(lm(ability ~ age_sc * eth_group, data=d_demo))$coefficients # R^2=.48 white-, age*white+
+ses_reg <- summary(lm(ability ~ age_sc * ses_group, data=d_demo))$coefficients # R^2=.56
+sex_reg <- summary(lm(ability ~ age_sc * sex, data=d_demo))$coefficients # R^2=.59
+
+#ab_reg <- summary(lm(ability ~ age_sc * (eth_group + ses_group + sex), data=d_demo)) # R^2=.49
+#prod_reg <- summary(lm(production ~ age_sc * (eth_group + ses_group + sex), data=d_demo)) # R^2=.51
 ```
 
 ## Demographic effects in baseline Rasch model
 
-Figure 1 shows children's language ability vs. age by demographic group from the baseline Rasch model, which assumes no DIF.
-Although the demographic language ability advantages go in the expected directions (i.e., favoring female, high-SES, and white children), note that magnitude of the differences vary somewhat across the age range, especially for SES and ethnicity.
+Figure 1 shows children's language ability vs. age by demographic group from the baseline Rasch model, which assumes no DIF (i.e., equal item parameters for all groups).
+A linear regression for each demographic group, with age (centered) and its interaction, showed significant effects in the expected directions, as can also be seen in the figure. 
+Female children had higher language ability than male children ($\beta=0.56$, $p<.001$), with no significant interaction with age ($\beta=0.02$, $p=.10$.
+High-SES children had higher language ability than low-SES children ($\beta=0.23$, $p=.02$), an advantage that grew with age ($\beta=0.11$, $p<.001$).
+White children had higher language ability than non-white children ($\beta=0.50$, $p<.001$), an advantage that grew with age ($\beta=0.08$, $p<.001$).
+We will re-examine these demographic regressions after trimming items showing extreme DIF, which is what we turn to now.
+
+<!-- Although the demographic language ability advantages go in the expected directions (i.e., favoring female, high-SES, and white children), note that magnitude of the differences vary somewhat across the age range, especially for SES and ethnicity.
 Thus, although the IRT models are fitted to the entire age range, our comparisons of average ability will focus on the middle of the CDI:WS' intended age range, where there is great variation in the size and composition of children's vocabulary.
 At ages 23-25 months, the average female vs. male advantage is an ability difference of $\theta_{f-m} = 0.78$, amounting to females knowing 69 more words, on average.
 The average advantage for high-SES children at 23-25 months is $\theta_{high-low} = 0.33$, amounting to 33 more produced CDI items.
 The average advantage for white vs. non-white children in this age range is $\theta_{w-nonw} = 0.52$, an average of 45 more produced CDI items.
+-->
+
 
 ```{r baseline-ability-vs-age, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.3, fig.height=6, set.cap.width=T, num.cols.cap=1, fig.cap = "Language ability vs. age by demographic group, from the Rasch model."}
 p1 <- d_demo %>% filter(!is.na(sex)) %>%
@@ -246,9 +259,115 @@ ggarrange(p1, p2, p3, ncol=1)
 
 
 
-## Demographic effects in group models
+<!-- put the GLIMMERs side-by-side?
+```{r 2-col-image, fig.env = "figure*", fig.pos = "h", fig.width=4, fig.height=2, fig.align = "center", set.cap.width=T, num.cols.cap=2, fig.cap = "This image spans both columns. And the caption text is limited to 0.8 of the width of the document."}
 
-maybe only do this after we've eliminated the most biased items?
+```
+-->
+
+## Identifying biased CDI items
+
+The first step we take to identify CDI items with DIF is to create GLIMMERs (Graphs of Logits Imputed Multiply with Means Equal; @stenhaug2021treading), which visualize between-item variation in group performance differences.
+These parameters are drawn from a fitted multigroup Rasch model for each demographic variable (sex, SES, and race), with the assumption that the mean language ability in each group is the same (e.g. for sex, $\mu_{male}=\mu_{female}=0$), thus pushing all between-group variation into the item difficulty parameters.
+For the case of sex, where we believe $\mu_{female}>\mu_{male}$, this means we may expect to find many items with difficulty $b_j^{female} < b_j^{male}$, but we can still examine the distribution of differences in item difficulty ($d_j = b_j^{male} - b_j^{female}$) for outliers.
+To give analysts a sense of the uncertainty about the existence of DIF, GLIMMER plots show distributions of parameter differences rather than point estimates. 
+These distributions are generated by drawing 10,000 imputations from the item parameter covariance matrix.
+
+Figures 2-4 show GLIMMERs for a selection of CDI items for sex, SES, and race, respectively.
+The full GLIMMERs, with all 680 CDI:WS items, are available on OSF, but were too large to include here.
+Nonetheless, it is important to inspect the full plots, for if there is a cluster of items in a GLIMMER, the analyst may conclude that these items are strong candidates for DIF on that dimension.
+For example, there is some clustering at the top and bottom of Figure 2: at the top, "vagina", "tights", "dress (object)", and "doll" form a cluster of items that are much easier for females, while at the bottom, "penis" stands out as much easier for males.
+For the SES and race GLIMMERs (Figures 3 and 4)--and in the rest of the full sex GLIMMER, there are not clusters, but rather a continuum of smoothly varying differences with overlap. 
+This makes identifying items with DIF quite difficult, as different methods are likely to yield inconsistent results [@stenhaug2021treading].
+
+
+```{r get-dif-dfs}
+extract_group_df <- function(group_model, groups=c("Male","Female")) {
+  Mit = as_tibble(coef(group_model, simplify=T)[[groups[1]]]$items) %>%
+    mutate(definition = rownames(coef(group_model, simplify=T)[[groups[1]]]$items),
+           group1 = groups[1],
+           group2 = groups[2]) %>%
+    select(-g, -u) %>% 
+    rename(d_g1 = d)
+  Fit = as_tibble(coef(group_model, simplify=T)[[groups[2]]]$items) %>%
+    mutate(definition = rownames(coef(group_model, simplify=T)[[groups[2]]]$items)) %>%
+    select(-g, -u) %>%
+    rename(d_g2 = d)
+  
+  combo <- Mit %>% left_join(Fit) %>%
+    mutate(d_diff = d_g2 - d_g1,
+           d_diff_abs = abs(d_diff)) 
+  return(combo)
+}
+
+get_extreme_item_difficulty_differences <- function(mm, sd_thresh=2, verbose=F) {
+  #yfit <- dnorm(mm$d_diff, mean = mean(mm$d_diff), sd = sd(mm$d_diff)) 
+  mm <- mm %>% mutate(d_diff = d_g2 - d_g1)
+  max_dif = mean(mm$d_diff) + sd_thresh*sd(mm$d_diff)
+  min_dif = mean(mm$d_diff) - sd_thresh*sd(mm$d_diff)
+  mm <- mm %>% mutate(extreme = ifelse((d_diff > max_dif) | (d_diff < min_dif), T, F))
+  if(verbose) print(paste("mininum difference:",round(min_dif,3), "maximum difference:",round(max_dif,3)))
+  return(mm)
+}
+
+mm_sex <- extract_group_df(mod_intuitive_sex, groups=c("Male","Female"))
+mm_ses <- extract_group_df(mod_intuitive_ses, groups=c("high","low"))
+mm_eth <- extract_group_df(mod_intuitive_eth, groups=c("Nonwhite","White"))
+
+mm_sex <- get_extreme_item_difficulty_differences(mm_sex) # min: -.53 max: 1.06
+mm_ses <- get_extreme_item_difficulty_differences(mm_ses) # min: -1.13 max: 1.07
+mm_eth <- get_extreme_item_difficulty_differences(mm_eth) # min: -.64 max: 1.56
+
+# median sex difference: 
+# median(mm_sex$d_diff) # 0.28
+
+# median SES difference: 
+# median(mm_ses$d_diff) # 0.009 - very small!
+
+# median race difference:
+# median(mm_eth$d_diff) # 0.40 - large!
+
+# report # of items above and below 0 for each demographic?
+
+all_extreme <- rbind(subset(mm_sex, extreme),
+                     subset(mm_ses, extreme),
+                     subset(mm_eth, extreme)) 
+# length(unique(all_extreme$definition)) # 76 - so 19 items extreme on >1 dimension
+# sort(table(all_extreme$definition)) # candy, choo choo, daddy, duck, ... tractor, vroom
+```
+
+
+
+```{r sex-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.2, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the sex bias model. Words at the top are easier to learn for females, while those at the bottom are easier for males."}
+#img <- png::readPNG("figs/lab_logo_stanford.png")
+#grid::grid.raster(img)
+knitr::include_graphics("figs/smGLIMMER_sex_prodWS.pdf")
+```
+
+
+```{r ses-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the SES bias model. Words at the top are easier to learn for children from low-SES families, while those at the bottom are easier for those from high-SES families."}
+knitr::include_graphics("figs/smGLIMMER_ses_prodWS.pdf")
+```
+
+
+```{r eth-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the ethnicity bias model. Words at the top are easier to learn for children from low-SES families, while those at the bottom are easier for those from high-SES families."}
+knitr::include_graphics("figs/smGLIMMER_eth_prodWS.pdf")
+```
+
+
+```{r, eval=F, include=F}
+View(subset(mm_sex, extreme)) # 25 extreme (outside 2sd) - 7 favoring girls, 18 favoring boys
+# possibly underestimating the female advantage?
+View(subset(mm_ses, extreme)) # 39 extreme - 13 favoring low-SES, 26 favoring high-SES
+View(subset(mm_eth, extreme)) # 31 extreme - 11 favoring nonwhite, 20 favoring white
+# overestimating both high-SES and white advantages?
+```
+
+
+
+## Demographic effects after trimming
+
+Having identified 76 CDI items that function differently across demographic groups -- including 19 that 
 
 ```{r demo-ability, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.3, fig.height=5.5, set.cap.width=T, num.cols.cap=1, fig.cap = "Density plots of language ability for children aged 23-25 months, based on the group models."}
 # show density plots of child ability based on group models
@@ -313,107 +432,6 @@ p3 <- eth %>%
 # coef(mod_intuitive_eth)$White$GroupPars - but means both 0, just SD varies?
 
 ggarrange(p1, p2, p3, ncol=1)
-```
-
-
-
-
-<!-- put the GLIMMERs side-by-side?
-```{r 2-col-image, fig.env = "figure*", fig.pos = "h", fig.width=4, fig.height=2, fig.align = "center", set.cap.width=T, num.cols.cap=2, fig.cap = "This image spans both columns. And the caption text is limited to 0.8 of the width of the document."}
-
-```
--->
-
-## Identifying biased CDI items
-
-The first step we take to identify CDI items with DIF is to create GLIMMERs (Graphs of Logits Imputed Multiply with Means Equal; @stenhaug2021treading), which visualize between-item variation in group performance differences.
-
-To give analysts a sense of the uncertainty about the existence of DIF, GLIMMER plots show distributions of parameter differences rather than point estimates. 
-These distributions are generated by drawing 10,000 imputations from the item parameter covariance matrix.
-If there is a cluster of items in the GLIMMER plot, the analyst may conclude that these items 
-If there is no cluster, but rather a continuum of smoothly varying differences, the identification of DIF is fraught:
-
-summarize findings
-
-```{r get-dif-dfs}
-extract_group_df <- function(group_model, groups=c("Male","Female")) {
-  Mit = as_tibble(coef(group_model, simplify=T)[[groups[1]]]$items) %>%
-    mutate(definition = rownames(coef(group_model, simplify=T)[[groups[1]]]$items),
-           group1 = groups[1],
-           group2 = groups[2]) %>%
-    select(-g, -u) %>% 
-    rename(d_g1 = d)
-  Fit = as_tibble(coef(group_model, simplify=T)[[groups[2]]]$items) %>%
-    mutate(definition = rownames(coef(group_model, simplify=T)[[groups[2]]]$items)) %>%
-    select(-g, -u) %>%
-    rename(d_g2 = d)
-  
-  combo <- Mit %>% left_join(Fit) %>%
-    mutate(d_diff = d_g2 - d_g1,
-           d_diff_abs = abs(d_diff)) 
-  return(combo)
-}
-
-get_extreme_item_difficulty_differences <- function(mm, sd_thresh=2, verbose=F) {
-  #yfit <- dnorm(mm$d_diff, mean = mean(mm$d_diff), sd = sd(mm$d_diff)) 
-  mm <- mm %>% mutate(d_diff = d_g2 - d_g1)
-  max_dif = mean(mm$d_diff) + sd_thresh*sd(mm$d_diff)
-  min_dif = mean(mm$d_diff) - sd_thresh*sd(mm$d_diff)
-  mm <- mm %>% mutate(extreme = ifelse((d_diff > max_dif) | (d_diff < min_dif), T, F))
-  if(verbose) print(paste("mininum difference:",round(min_dif,3), "maximum difference:",round(max_dif,3)))
-  return(mm)
-}
-
-mm_sex <- extract_group_df(mod_intuitive_sex, groups=c("Male","Female"))
-mm_ses <- extract_group_df(mod_intuitive_ses, groups=c("high","low"))
-mm_eth <- extract_group_df(mod_intuitive_eth, groups=c("Nonwhite","White"))
-
-mm_sex <- get_extreme_item_difficulty_differences(mm_sex) # min: -.53 max: 1.06
-mm_ses <- get_extreme_item_difficulty_differences(mm_ses) # min: -1.13 max: 1.07
-mm_eth <- get_extreme_item_difficulty_differences(mm_eth) # min: -.64 max: 1.56
-
-# median sex difference: 
-# median(mm_sex$d_diff) # 0.28
-
-# median SES difference: 
-# median(mm_ses$d_diff) # 0.009 - very small!
-
-# median race difference:
-# median(mm_eth$d_diff) # 0.40 - large!
-
-# report # of items above and below 0 for each demographic?
-
-all_extreme <- rbind(subset(mm_sex, extreme),
-                     subset(mm_ses, extreme),
-                     subset(mm_eth, extreme)) 
-# length(unique(all_extreme$definition)) # 76 - so 19 items extreme on >1 dimension
-# sort(table(all_extreme$definition)) # candy, choo choo, daddy, duck, ... tractor, vroom
-```
-
-```{r, eval=F, include=F}
-View(subset(mm_sex, extreme)) # 25 extreme (outside 2sd) - 7 favoring girls, 18 favoring boys
-# possibly underestimating the female advantage?
-View(subset(mm_ses, extreme)) # 39 extreme - 13 favoring low-SES, 26 favoring high-SES
-View(subset(mm_eth, extreme)) # 31 extreme - 11 favoring nonwhite, 20 favoring white
-# overestimating both high-SES and white advantages?
-```
-
-
-
-```{r sex-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.2, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the sex bias model. Words at the top are easier to learn for females, while those at the bottom are easier for males."}
-#img <- png::readPNG("figs/lab_logo_stanford.png")
-#grid::grid.raster(img)
-knitr::include_graphics("figs/smGLIMMER_sex_prodWS.pdf")
-```
-
-
-```{r ses-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the SES bias model. Words at the top are easier to learn for children from low-SES families, while those at the bottom are easier for those from high-SES families."}
-knitr::include_graphics("figs/smGLIMMER_ses_prodWS.pdf")
-```
-
-
-```{r eth-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the ethnicity bias model. Words at the top are easier to learn for children from low-SES families, while those at the bottom are easier for those from high-SES families."}
-knitr::include_graphics("figs/smGLIMMER_eth_prodWS.pdf")
 ```
 
 
