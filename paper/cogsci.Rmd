@@ -406,11 +406,12 @@ sex_reg_pr <- summary(lm(ability_pr ~ age_sc * sex, data=d_demo))$coefficients #
 ```
 
 
-We identified 76 CDI items that function quite differently across demographic groups, and chose to prune the 15 items with large difficulty differences for both SES and race. 
-After pruning these 2.2% of CDI:WS items, regressions with each demographic variable (and age, centered) showed smaller effects of SES ($\beta=0.20$ vs. $\beta=0.23$) and race ($\beta=0.48$ vs. $\beta=0.50$), while the effect of sex remained the same.
+We identified 76 CDI items that function quite differently across demographic groups, and chose to prune just the 15 items with large difficulty differences for both SES and race. 
+After pruning just these 15 items from the CDI:WS and re-fitting a Rasch IRT model, regressions predicting ability with each demographic variable (and age, centered) showed reduced main effects of SES ($\beta=0.20$ vs. $\beta=0.23$) and race ($\beta=0.48$ vs. $\beta=0.50$).
+Although these are small reductions in the SES and race effect sizes, we find them striking as we pruned only 2.2% of the CDI:WS items (and only 20% of the 76 extrema we identified), and did not specifically prune items that were biased against the disadvantaged groups (non-white, low-SES).
 
-```{r demo-ability, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.3, fig.height=5.5, set.cap.width=T, num.cols.cap=1, fig.cap = "Density plots of language ability for children aged 23-25 months using the pruned model."}
 
+```{r demo-ability, include=F, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.3, fig.height=5.5, set.cap.width=T, num.cols.cap=1, fig.cap = "Density plots of language ability for children aged 23-25 months using the pruned model."}
 # ToDo: maybe make these violin plots and squeeze all 6 groups side-by-side?
 
 # sex
@@ -470,21 +471,31 @@ p3 <- eth %>%
     scale_color_discrete(type=eth_colors) + 
     scale_fill_discrete(type=eth_colors)
 
-# Note: can extract group parameters:
-# coef(mod_intuitive_eth)$White$GroupPars - but means both 0, just SD varies?
-
 ggarrange(p1, p2, p3, ncol=1)
 ```
 
 
 # Discussion
 
-We investigated a popular test of children's early vocabulary for potential demographic bias, examining the distribution of words' estimated difficulties for high- vs. low-SES children, females vs. males, and for white vs. non-white children.
+We investigated the CDI:WS, a popular parent-report measure of children's early vocabulary, for potential demographic bias, examining the distribution of words' estimated difficulties for high- vs. low-SES children, females vs. males, and for white vs. non-white children.
+The IRT-based analysis revealed differential item functioning (DIF) for many items along each demographic dimension, but only in the case of sex were clear clusters of items that were more well-known to females (including feminine clothing and genitalia), and a clear item that was more well-known to males (male genitalia). 
+For the rest of the items, and for SES- and race-based analysis, there was a smooth continuum of DIF, making the boundary of true DIF subjective, as this would rely on knowing the true difference in language ability between groups--which we reciprocally estimate from instruments like the CDI.
+To move forward, we identified candidate DIF items by looking at the extremes of each distribution, and found that for SES and race, the majority of these extrema (66% in both cases) were easier for the majority demographic group (i.e., high-SES, white), meaning that if these items were removed, SES and race effects on language ability as measured by the CDI:WS would decrease.
+In contrast, the majority of the extrema in the sex-based DIF analysis were easier for the disadvantaged group (males): if these extrema are removed, the female language advantage on the CDI:WS will likely increase.
+To confirm these implications, we pruned a very small number of CDI items (15 of 680) that were DIF extrema in both SES- and race-based analyses, and found that the effect of these dimensions on language ability was reduced.
+
+This investigation is only a first step in measuring demographic bias in the items on the CDI:WS.
+In aggregate, it seems to suggest that we may be slightly overestimating the magnitude of differences in language ability along the dimensions of SES and race, and perhaps underestimating the female advantage.
+However, the best way to estimate endogenous differences in ability (rather than exogenous differences, e.g. in the language environment) would be to conduct controlled, in-lab experiments measuring children's ability to learn novel words.
+Future research may also look into the specific items that are easier for one group than another, and determine whether these differences can be accounted for by different environmental contexts. 
+For example, it is striking that many of the extrema favoring high-SES children are animals and animal sounds (e.g., "grrr", "quack quack", "woof woof", "baa baa", "duck", "sheep", "giraffe", "zebra"): do high-SES households visit the zoo more, or do they often engage in other activities related to naming animals and noises they make?
+If certain high-SES activities are driving early word learning for these children, what are the activities (and associated vocabulary) that low-SES households are instead engaging in?
+A fair test of children's early vocabulary would contain a representative sample of words from all activities that children engage in, across demographic groups.
 
 # Acknowledgements
 
-Place acknowledgments (including funding information) in a section at
-the end of the paper.
+[Redacted for anonymous review.]
+<!--We thank members of the Language and Cognition lab for their feedback.-->
 
 # References 
 
