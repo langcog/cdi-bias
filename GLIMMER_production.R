@@ -217,3 +217,56 @@ eth_histn <- item_difficulty_difference_histogram(mm_eth, withNormal = T)
 
 ggarrange(sex_histn, ses_histn, eth_histn, nrow=1)
 ggsave(file="item_DIF_hists_withNormals.pdf", width=8, height=3.5)
+
+
+
+
+# constrained multiGroup model, allowing only variance between groups to vary
+constrained_sex <- multipleGroup(d_mat, 1, itemtype = "Rasch", 
+                                 sex_group, invariance = c("intercepts","free_var"), SE = TRUE, verbose = T)
+
+constrained_ses <- multipleGroup(d_mat, 1, itemtype = "Rasch", 
+                                 ses_group, invariance = c("intercepts","free_var"), SE = TRUE, verbose = T)
+
+constrained_eth <- multipleGroup(d_mat, 1, itemtype = "Rasch", 
+                                 eth_group, invariance = c("intercepts","free_var"), SE = TRUE, verbose = T)
+
+
+# AOAA-OAT: all others as anchors - one at a time
+# remove the item showing most DIF (based on chisq LR test) from the anchor set, 
+# re-fit, iterate until no new items display DIF
+AOAA_OAT <- function(d_mat, group, fname=c()) {
+  mirtCluster()
+  constrained <- multipleGroup(d_mat, 1, itemtype = "Rasch", 
+                               group, invariance = c("intercepts","free_var"), SE = TRUE, verbose = T)
+  items_removed <- tibble()
+  difPresent = TRUE
+  while(difPresent) {
+    # figure out which item shows the most DIF (by LRT--chisq)
+    difm <- DIF(constrained, which.par=c('d'), scheme='drop') # ~20 minutes per item..
+    most_dif_indx = which(difm$X2==max(difm$X2))
+    if(difm[most_dif_indx,]$p<.01) {
+      items_removed = bind_rows(items_removed, 
+                                bind_cols(word=row.names(difm)[most_dif_indx], difm[most_dif_indx,]))
+      col_to_remove = which(colnames(d_mat)==row.names(difm)[most_dif_indx])
+      print(paste("removing",row.names(difm)[most_dif_indx]))
+      # remove that item, fit the constrained model again
+      constrained <- multipleGroup(d_mat[,-col_to_remove], 1, itemtype = "Rasch", 
+                                       group, invariance = c("intercepts","free_var"), SE = TRUE, verbose = T)
+      if(length(fname)>0) save(constrained, items_removed, file=paste0("AOAA-OAT_",fname,".Rdata"))
+    } else {
+      difPresent = FALSE
+    }
+  }
+  return(list(model=constrained, items_removed=items_removed, dif_stats=difm))
+}
+
+AOAA_OAT(d_mat, ses_group, "ses")
+AOAA_OAT(d_mat, sex_group, "sex")
+AOAA_OAT(d_mat, eth_group, "race")
+
+# drop uses a constrained model (e.g. same group means) and then tests whether dropping
+dif_itemN = DIF(mod_intuitive_sex, which.par=c('d'), scheme='drop', items2test=1:2)
+
+dif_itemN = DIF(mod_intuitive_sex, 'd', scheme='add', items2test = 1)
+# Error in constrain[[i]] :  attempt to select less than one element in integerOneIndex
