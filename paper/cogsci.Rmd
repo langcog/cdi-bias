@@ -481,7 +481,7 @@ ggarrange(p1, p2, p3, ncol=1)
 Demographic differences in language ability are likely to be at least partially explained by differences in linguistic input received by children in different groups.
 Indeed, input quantity (total daily tokens) and some measures of quality (e.g., lexical diversity: ratio of word types vs. tokens) have been predictive of language learning outcomes in some demographic studies [@rowe2009differences; @huttenlocher1991early].
 Here, we investigated the extent to which word frequency in child-directed speech to male vs. female children was predictive of the amount of DIF shown by CDI items. 
-Similar to the approach taken by Braginsky, Meylan, and Frank (2016), we used the CHILDES corpus of transcripts from dyadic play sessions [@macwhinney2000childes], which are labeled with the sex of the target child, but not other demographic variables.
+Similar to the approach taken by @braginsky2016gender, we used the CHILDES corpus of transcripts from dyadic play sessions [@macwhinney2000childes], which are labeled with the sex of the target child, but not other demographic variables.
 (Number of males, number of females, total word counts, a couple examples...)
 
 Overall, the correlation between the proportion of times a word was spoken to a female child and the size of the female (vs. male) advantage for that CDI word was modest, but significant ($r=0.19$, $p<.001$).
