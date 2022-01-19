@@ -62,7 +62,8 @@ Demographic factors are also predictive of language skill: first-born children t
 However, it is also difficult to get a complete measure of young children's language skill: long recordings are prohibitively difficult to collect and transcribe [see @roy2015predicting, the exception that proves the rule], and yet any short recording (e.g., a 1-hour play session) will elicit only a small proportion of the words and constructions that children know. 
 Thus, researchers of early word learning have constructed tests with hundreds of words, with an intentional bias to select words that are more likely to be known by children.
 
-We focus on one set of popular instruments, the MacArthur-Bates Communicative Development Inventories [CDIs; @Fenson2007] are a set of parent-reported measures of children's productive and receptive language skills, which produce a low-cost and reliable way to estimate children's early language skills [@fenson1994].
+We focus on one set of popular instruments, the MacArthur-Bates Communicative Development Inventories [CDIs; @Fenson2007]. 
+The CDIs are a set of parent-reported measures of children's productive and receptive language skills, which produce a low-cost and reliable way to estimate children's early language skills [@fenson1994].
 CDIs have shown good predictive validity [e.g., @fenson1994; Bornstein et al. 2012, Duff et al. 2015].
 Our focus will be on the vocabulary checklist portion of the CDI Words & Sentences (CDI:WS) form, comprised of 680 early-learned words across 22 categories (e.g., animals, vehicles, action words, pronouns) selected to assess the productive vocabulary of children 16 to 30 months of age.
 For each item on the CDI:WS, caregivers are asked to respond whether the target child has been heard to say (i.e. produce) the given item.[^1]
@@ -79,7 +80,7 @@ For example, asking whether a 22-month-old produces the word "ball" is far less 
 While it is quite reasonable to expect that some CDI words are easier than others, and even to use these varying difficulties to predict variation in children's language ability, the use of psychometric models highlights the possibility that some CDI items may function differently (i.e., be more/less difficult) for different groups of children.
 The idea that some items on a test may show bias, favoring one group over another, is known as Differential Item Function (DIF; @holland1993differential]. 
 On any given test, it is clearly undesirable to have more items favoring one group (say, children from rural households) over another (urban children), as the test will overestimate the ability of test-takers in the former (rural) group -- and not because of any underlying mean difference in ability between the groups, but simply because the test is unfair [@camilli2013ongoing].
-A variety of statistical methods for detecting DIF have been proposed, and investigations have in several instances identified DIF for many items on tests favoring particular one group over another (e.g., rural vs. urban).
+A variety of statistical methods for detecting DIF have been proposed, and investigations have in several instances identified DIF for many items on tests favoring one group over another (e.g., rural vs. urban).
 Our goal here is to test the items on the American CDI:WS for DIF along three main axes: sex (male vs. female), socioeconomic status (low- vs. high-SES), and race (white vs. non-white).
 
 However, DIF is fundamentally difficult to identify for multiple reasons [for an overview, see @stenhaug2021treading].
