@@ -253,7 +253,7 @@ AOAA_OAT <- function(d_mat, group, fname=c()) {
       # remove that item, fit the constrained model again
       constrained <- multipleGroup(d_mat[,-col_to_remove], 1, itemtype = "Rasch", 
                                        group, invariance = c("intercepts","free_var"), SE = TRUE, verbose = T)
-      if(length(fname)>0) save(constrained, items_removed, file=paste0("AOAA-OAT_",fname,".Rdata"))
+      if(length(fname)>0) save(constrained, items_removed, difm, file=paste0("AOAA-OAT_",fname,".Rdata"))
     } else {
       difPresent = FALSE
     }
@@ -261,12 +261,12 @@ AOAA_OAT <- function(d_mat, group, fname=c()) {
   return(list(model=constrained, items_removed=items_removed, dif_stats=difm))
 }
 
-AOAA_OAT(d_mat, ses_group, "ses")
-AOAA_OAT(d_mat, sex_group, "sex")
-AOAA_OAT(d_mat, eth_group, "race")
+ses_aoaa <- AOAA_OAT(d_mat, ses_group, "ses")
+sex_aoaa <- AOAA_OAT(d_mat, sex_group, "sex")
+race_aoaa <- AOAA_OAT(d_mat, eth_group, "race")
 
 # drop uses a constrained model (e.g. same group means) and then tests whether dropping
-dif_itemN = DIF(mod_intuitive_sex, which.par=c('d'), scheme='drop', items2test=1:2)
+#dif_itemN = DIF(mod_intuitive_sex, which.par=c('d'), scheme='drop', items2test=1:2)
 
-dif_itemN = DIF(mod_intuitive_sex, 'd', scheme='add', items2test = 1)
+#dif_itemN = DIF(mod_intuitive_sex, 'd', scheme='add', items2test = 1)
 # Error in constrain[[i]] :  attempt to select less than one element in integerOneIndex
