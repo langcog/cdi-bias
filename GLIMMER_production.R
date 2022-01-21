@@ -251,7 +251,8 @@ AOAA_OAT <- function(d_mat, group, fname=c()) {
       col_to_remove = which(colnames(d_mat)==row.names(difm)[most_dif_indx])
       print(paste("removing",row.names(difm)[most_dif_indx]))
       # remove that item, fit the constrained model again
-      constrained <- multipleGroup(d_mat[,-col_to_remove], 1, itemtype = "Rasch", 
+      d_mat = d_mat[,-col_to_remove]
+      constrained <- multipleGroup(d_mat, 1, itemtype = "Rasch", 
                                        group, invariance = c("intercepts","free_var"), SE = TRUE, verbose = T)
       if(length(fname)>0) save(constrained, items_removed, difm, file=paste0("AOAA-OAT_",fname,".Rdata"))
     } else {
