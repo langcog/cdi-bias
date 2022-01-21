@@ -307,16 +307,19 @@ get_extreme_item_difficulty_differences <- function(mm, sd_thresh=2, verbose=F) 
 mm_sex <- extract_group_df(mod_intuitive_sex, groups=c("Male","Female"))
 mm_ses <- extract_group_df(mod_intuitive_ses, groups=c("low","high"))
 mm_eth <- extract_group_df(mod_intuitive_eth, groups=c("Nonwhite","White"))
+```
 
+
+```{r train-pruned-models, eval=F}
 # varying thresholds
 prune_dat <- tibble()
-for(thresh in seq(.25, 2.5, .25)) {
+for(thresh in seq(.25, 3.0, .25)) {
   tmp_sex <- get_extreme_item_difficulty_differences(mm_sex, sd_thresh=thresh) # min: -.53 max: 1.06
   tmp_ses <- get_extreme_item_difficulty_differences(mm_ses, sd_thresh=thresh) # min: -1.07 max: 1.13
   tmp_eth <- get_extreme_item_difficulty_differences(mm_eth, sd_thresh=thresh) # min: -.64 max: 1.56
-  prune_defs <- intersect(intersect(subset(tmp_ses, extreme)$definition, 
-                       subset(tmp_eth, extreme)$definition),
-                       subset(tmp_sex, extreme)$definition)
+  prune_defs <- unique(c(subset(tmp_ses, extreme)$definition, 
+                       subset(tmp_eth, extreme)$definition,
+                       subset(tmp_sex, extreme)$definition))
   
   # prune the columns
   keep_cols <- which(!is.element(names(d_mat), prune_defs))
@@ -350,20 +353,40 @@ for(thresh in seq(.25, 2.5, .25)) {
                                eth_beta = eth_reg_pr[3,1]))
 }
 
-# 2SD threshold
-mm_sex2 <- get_extreme_item_difficulty_differences(mm_sex) # min: -.53 max: 1.06
-mm_ses2 <- get_extreme_item_difficulty_differences(mm_ses) # min: -1.07 max: 1.13
-mm_eth2 <- get_extreme_item_difficulty_differences(mm_eth) # min: -.64 max: 1.56
+save(prune_dat, file=here("data/pruned_demo_coefs.Rdata"))
+```
 
-all_extreme <- rbind(subset(mm_sex2, extreme),
-                     subset(mm_ses2, extreme),
-                     subset(mm_eth2, extreme)) 
+```{r}
+# 2SD threshold
+mm_sex <- get_extreme_item_difficulty_differences(mm_sex) # min: -.53 max: 1.06
+mm_ses <- get_extreme_item_difficulty_differences(mm_ses) # min: -1.07 max: 1.13
+mm_eth <- get_extreme_item_difficulty_differences(mm_eth) # min: -.64 max: 1.56
+
+all_extreme <- rbind(subset(mm_sex, extreme),
+                     subset(mm_ses, extreme),
+                     subset(mm_eth, extreme)) 
 # length(unique(all_extreme$definition)) 
 # sort(table(all_extreme$definition)) # candy, choo choo, daddy, duck, ... tractor, vroom
 
 # overlap between extreme SES and race items:
 #intersect(subset(mm_ses, extreme)$definition, subset(mm_eth, extreme)$definition)
 ```
+
+```{r pruned-coefs, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.5, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "Size of demographic effects (regression coefficients) vs. the threshold of pruned items."}
+load(here("data/pruned_demo_coefs.Rdata"))
+
+prune_dat %>% rename(c(beta_sex=sex_beta, beta_ses=ses_beta, beta_eth=eth_beta)) %>%
+  pivot_longer(c("extreme_sex","extreme_ses","extreme_eth","beta_sex","beta_ses","beta_eth"), 
+                           names_to=c("type", "demo"), names_sep="_") %>%
+  pivot_wider(names_from=type, values_from=value) %>%
+  mutate(Dimension = ifelse(demo=="ses", "maternal ed", ifelse(demo=="eth", "race", demo))) %>%
+  ggplot(aes(x=SDthreshold, y=beta, color=extreme)) + facet_wrap(. ~ Dimension) + 
+  geom_point() + theme(legend.position = "bottom") +
+  labs(color="Excluded items") + 
+  xlab("Exclusion Threshold (SDs)") + ylab("Regression coefficient (beta)")
+```
+
+
 
 ### Sex
 For sex, the median difficulty difference (male-female) was `r round(median(mm_sex$d_diff),2)` (M=`r round(mean(mm_sex$d_diff),2)`, sd=`r round(sd(mm_sex$d_diff),2)`), with `r length(which(mm_sex$d_diff>0))`/680 items being easier for females than males.
