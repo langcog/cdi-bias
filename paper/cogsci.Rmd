@@ -47,8 +47,9 @@ library(tidyverse)
 library(here)
 library(mirt)
 library(ggpubr)
+library(ggrepel)
 
-theme_set(theme_classic(base_size=10))
+theme_set(theme_classic(base_size=10)) 
 ```
 
 # Introduction 
@@ -225,7 +226,6 @@ The average advantage for high-SES children at 23-25 months is $\theta_{high-low
 The average advantage for white vs. non-white children in this age range is $\theta_{w-nonw} = 0.52$, an average of 45 more produced CDI items.
 -->
 
-
 ```{r baseline-ability-vs-age, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.3, fig.height=6, set.cap.width=T, num.cols.cap=1, fig.cap = "Language ability vs. age by demographic group, from the Rasch model."}
 p1 <- d_demo %>% filter(!is.na(sex)) %>%
   ggplot(aes(x=jitter(age), y=ability, color=sex)) + 
@@ -250,14 +250,6 @@ p3 <- d_demo %>% filter(!is.na(eth_group)) %>%
 
 ggarrange(p1, p2, p3, ncol=1)
 ```
-
-
-
-<!-- put the GLIMMERs side-by-side?
-```{r 2-col-image, fig.env = "figure*", fig.pos = "h", fig.width=4, fig.height=2, fig.align = "center", set.cap.width=T, num.cols.cap=2, fig.cap = "This image spans both columns. And the caption text is limited to 0.8 of the width of the document."}
-
-```
--->
 
 ## Identifying biased CDI items
 
@@ -372,18 +364,46 @@ all_extreme <- rbind(subset(mm_sex, extreme),
 #intersect(subset(mm_ses, extreme)$definition, subset(mm_eth, extreme)$definition)
 ```
 
-```{r pruned-coefs, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.5, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "Size of demographic effects (regression coefficients) vs. the threshold of pruned items."}
+```{r pruned-coefs, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.4, fig.height=4.75, set.cap.width=T, num.cols.cap=1, fig.cap = "Size of demographic effects (regression coefficients) vs. the threshold of pruned items."}
 load(here("data/pruned_demo_coefs.Rdata"))
 
-prune_dat %>% rename(c(beta_sex=sex_beta, beta_ses=ses_beta, beta_eth=eth_beta)) %>%
+# prune_dat %>% rename(c(beta_sex=sex_beta, beta_ses=ses_beta, beta_eth=eth_beta)) %>%
+#   pivot_longer(c("extreme_sex","extreme_ses","extreme_eth","beta_sex","beta_ses","beta_eth"), 
+#                            names_to=c("type", "demo"), names_sep="_") %>%
+#   pivot_wider(names_from=type, values_from=value) %>%
+#   mutate(Dimension = ifelse(demo=="ses", "maternal ed", ifelse(demo=="eth", "race", demo))) %>%
+#   ggplot(aes(x=SDthreshold, y=beta, color=extreme)) + facet_wrap(. ~ Dimension, scales="free") + 
+#   geom_point() + theme(legend.position = "bottom") + # geom_line() +
+#   labs(color="Excluded items") + 
+#   xlab("Exclusion Threshold (SDs)") + ylab("Regression coefficient (beta)")
+
+
+pdat <- prune_dat %>% rename(c(beta_sex=sex_beta, beta_ses=ses_beta, beta_eth=eth_beta)) %>%
   pivot_longer(c("extreme_sex","extreme_ses","extreme_eth","beta_sex","beta_ses","beta_eth"), 
                            names_to=c("type", "demo"), names_sep="_") %>%
   pivot_wider(names_from=type, values_from=value) %>%
-  mutate(Dimension = ifelse(demo=="ses", "maternal ed", ifelse(demo=="eth", "race", demo))) %>%
-  ggplot(aes(x=SDthreshold, y=beta, color=extreme)) + facet_wrap(. ~ Dimension) + 
-  geom_point() + theme(legend.position = "bottom") +
-  labs(color="Excluded items") + 
-  xlab("Exclusion Threshold (SDs)") + ylab("Regression coefficient (beta)")
+  mutate(Dimension = ifelse(demo=="ses", "maternal ed", ifelse(demo=="eth", "race", demo))) 
+  
+pr1 <- pdat %>% filter(Dimension=="sex") %>%
+  ggplot(aes(x=SDthreshold, y=beta, color=extreme)) + 
+  geom_point() + theme(legend.position = "bottom") + 
+  labs(color="Excluded items") + ylim(-.7, -.4) + ggtitle("Sex") +
+  xlab("Exclusion Threshold (SDs)") + ylab("Coefficient (beta)")
+
+pr2 <- pdat %>% filter(Dimension=="maternal ed") %>%
+  ggplot(aes(x=SDthreshold, y=beta, color=extreme)) + 
+  geom_point() + theme(legend.position = "bottom") + 
+  labs(color="Excluded items") + ylim(-.3, -.1) + ggtitle("Maternal Education") +
+  xlab("Exclusion Threshold (SDs)") + ylab("Coefficient (beta)")
+
+pr3 <- pdat %>% filter(Dimension=="race") %>%
+  ggplot(aes(x=SDthreshold, y=beta, color=extreme)) + 
+  geom_point() + theme(legend.position = "bottom") + 
+  labs(color="Excluded items") + ylim(.35, .55) + ggtitle("Race") +
+  xlab("Exclusion Threshold (SDs)") + ylab("Coefficient (beta)")
+
+
+ggarrange(pr1, pr2, pr3, ncol=1, common.legend = T)
 ```
 
 
@@ -456,6 +476,7 @@ View(subset(mm_eth, extreme)) # 31 extreme - 11 favoring nonwhite, 20 favoring w
 ## Demographic effects after pruning
 
 ```{r load-pruned}
+# (2sd threshold)
 load(here("data/eng_Ws_prod_mod_1pl_pruned.Rds"))
 
 d_demo <- d_demo %>% left_join(fscores_1pl)
@@ -468,6 +489,9 @@ sex_reg_pr <- summary(lm(ability_pr ~ age_sc * sex, data=d_demo))$coefficients #
 #white=.48
 #highSES=0.20
 #female=0.57
+
+# table proportion of DIF items by lexical class -
+# if due to environmental 
 ```
 
 
@@ -476,65 +500,37 @@ After pruning just these 15 items from the CDI:WS and re-fitting a Rasch IRT mod
 Although these are small reductions in the SES and race effect sizes, we find them striking as we pruned only 2.2% of the CDI:WS items (and only 20% of the 76 extrema we identified), and did not specifically prune items that were biased against the disadvantaged groups (non-white, low-SES).
 
 
-```{r demo-ability, include=F, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.3, fig.height=5.5, set.cap.width=T, num.cols.cap=1, fig.cap = "Density plots of language ability for children aged 23-25 months using the pruned model."}
-# ToDo: maybe make these violin plots and squeeze all 6 groups side-by-side?
+```{r demo-ability, include=T, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.5, fig.height=7.5, set.cap.width=T, num.cols.cap=1, fig.cap = "Scatterplots showing item difficulty per demographic group along each dimension."}
 
-# sex
-sex <- d_demo %>% filter(!is.na(sex), production!=0) %>%
-  mutate(theta_sex = ability_pr)
-  #mutate(theta_sex = fscores(mod_intuitive_sex)) 
-# cor.test(eth$production, eth$theta_eth) # .98
+p1 <- mm_sex %>%
+  ggplot(aes(x=-d_g1, y=-d_g2)) + geom_point(alpha=.2) + # color=extreme
+  xlab("Male Difficulty") + ylab("Female Difficulty") +
+  geom_text_repel(aes(label=definition)) +
+  geom_abline(aes(slope=1, intercept=0), linetype="dashed")
 
-sex_m2 <- sex %>% group_by(sex) %>%
-  filter(age<26, age>22) %>%
-  summarise(ability = mean(theta_sex, na.rm=T)) 
-# now Female ability = 0.68, male=0.14
-p1 <- sex %>% filter(age<26, age>22) %>%
-  ggplot(aes(x=theta_sex, color=sex, fill=sex)) +
-    geom_density(alpha=.2) + xlab("Ability") + 
-    geom_vline(data=sex_m2, aes(xintercept=ability, color=sex)) +
-    scale_color_discrete(type=sex_colors) + 
-    scale_fill_discrete(type=sex_colors)
+p2 <- mm_ses %>%
+  ggplot(aes(x=-d_g1, y=-d_g2)) + geom_point(alpha=.2) +
+  xlab("Low-ME Difficulty") + ylab("High-ME Difficulty") +
+  geom_text_repel(aes(label=definition)) +
+  geom_abline(aes(slope=1, intercept=0), linetype="dashed")
 
+p3 <- mm_eth %>%
+  ggplot(aes(x=-d_g1, y=-d_g2)) + geom_point(alpha=.2) +
+  xlab("Non-white Difficulty") + ylab("White Difficulty") +
+  geom_text_repel(aes(label=definition)) +
+  geom_abline(aes(slope=1, intercept=0), linetype="dashed")
 
-# SES
-ses <- d_demo %>% filter(!is.na(ses_group), production!=0) %>%
-  #mutate(theta_ses = fscores(mod_intuitive_ses)) %>%
-  mutate(theta_ses = ability_pr) %>%
-  filter(age<26, age>22) %>%
-  rename(SES=ses_group)
-# cor.test(eth$production, eth$theta_eth) # .98
-
-ses_m2 <- ses %>% group_by(SES) %>%
-  filter(age<26, age>22) %>%
-  summarise(ability = mean(theta_ses, na.rm=T)) 
-# now high ability=.41, low=.08
-p2 <- ses %>%
-  ggplot(aes(x=theta_ses, color=SES, fill=SES)) +
-    geom_density(alpha=.2) + xlab("Ability") + 
-    geom_vline(data=ses_m2, aes(xintercept=ability, color=SES)) + 
-    scale_color_discrete(type=ses_colors) +
-    scale_fill_discrete(type=ses_colors)
-
-
-# ethnicity
-eth <- d_demo %>% filter(!is.na(eth_group), production!=0) %>%
-  #mutate(theta_eth = fscores(mod_intuitive_eth)) %>%
-  mutate(theta_eth = ability_pr) %>%
-  filter(age<26, age>22) %>%
-  mutate(Race=eth_group)
-# cor.test(eth$production, eth$theta_eth) # .98
-
-eth_m2 <- eth %>% group_by(Race) %>%
-  filter(age<26, age>22) %>%
-  summarise(ability = mean(theta_eth, na.rm=T))
-# now white=.52, nonwhite=.47 (was .59, .06)
-p3 <- eth %>%
-  ggplot(aes(x=theta_eth, color=Race, fill=Race)) +
-    geom_density(alpha=.2) + xlab("Ability") + 
-    geom_vline(data=eth_m2, aes(xintercept=ability, color=Race)) + 
-    scale_color_discrete(type=eth_colors) + 
-    scale_fill_discrete(type=eth_colors)
+# p1 <- mm_sex %>% 
+#   ggplot(aes(x=d_diff)) + # , color=extreme, fill=extreme
+#     geom_density(alpha=.2) + xlab("Ability") 
+# 
+# p2 <- mm_ses %>%
+#   ggplot(aes(x=d_diff)) + 
+#     geom_density(alpha=.2) + xlab("Ability") 
+# 
+# p3 <- mm_eth %>%
+#   ggplot(aes(x=d_diff)) + 
+#     geom_density(alpha=.2) + xlab("Ability") 
 
 ggarrange(p1, p2, p3, ncol=1)
 ```
@@ -550,7 +546,7 @@ Similar to the approach taken by @braginsky2016gender, we used the CHILDES corpu
 
 Overall, the correlation between the proportion of times a word was spoken to a female child and the size of the female (vs. male) advantage for that CDI word was modest, but significant ($r=0.19$, $p<.001$).
 
-```{r}
+```{r, include=T, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.5, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "CHILDES frequency of input to male vs. female children."}
 type_freqs = readRDS("../data/type_freqs.rds")
 type_counts = readRDS("../data/type_counts.rds")
 type_counts_smoothed = readRDS("../data/type_counts_smoothed.rds")
@@ -569,7 +565,8 @@ tmp %>% #filter(extreme==T) %>%
   ggplot(aes(x=propFemale, y=d_diff, color=extreme)) + 
   geom_point(alpha=.5) + theme_bw() +
   ylab("Female - Male Word Difficulty") +
-  xlab("Proportion of Utterances to Females in CHILDES")
+  xlab("Proportion of Utterances to Females in CHILDES") +
+  theme(legend.position = "bottom")
 
 #subset(tmp, extreme==T & propFemale > .47 & propFemale < .53) # hose & dump
 
