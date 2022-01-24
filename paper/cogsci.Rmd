@@ -61,7 +61,7 @@ For example, @bornstein2016stability found stability in core language skills acr
 Yet maternal education, often used as a proxy for socioeconomic status (SES), has also been found to be associated with children's language processing and vocabulary by 18 months [@fernald2013ses], and to be predictive of later educational outcomes [@marchman2008speed; see @schwab2016 for a review].
 Other demographic factors are also predictive of language skill: first-born children tend to outpace their siblings, and female children tend to have better language skills than their age-matched male counterparts [@frank2021; @eriksson2012differences] -- a sex-based verbal advantage that continues through high school [see @petersen2018gender for a review].
 
-However, it is also difficult to get a complete measure of young children's language skill: long recordings are prohibitively difficult to collect and transcribe [see @roy2015predicting, the exception that proves the rule], and yet any short recording (e.g., a 1-hour play session) will elicit only a small proportion of the words and constructions that children know. 
+However, it is also difficult to get a complete measure of young children's language skill: long recordings are prohibitively difficult to collect and transcribe [see the singular exception: @roy2015predicting], and yet any short recording (e.g., a 1-hour play session) will elicit only a small proportion of the words and constructions that children know. 
 Thus, researchers of early word learning have constructed tests with hundreds of words, intentionally oversampling words that are more likely to be known by young children.
 
 We focus on the MacArthur-Bates Communicative Development Inventories [CDIs; @fenson1994; @Fenson2007], a set of parent-reported measures of children's productive and receptive language skills, which offer a low-cost and reliable way to estimate children's early language skills [@fenson1994].
@@ -73,15 +73,17 @@ Due to these desirable properties, CDIs have been adapted to dozens of languages
 
 <!-- [^1]: The CDI: Words and Gestures form includes a subset of the CDI:WS items and targets children 12 to 18 months of age, measuring both comprehension and production. -->
 
-<!-- nix the CAT transition, raise the issue of potential test bias somehow-->
-
-Inspired by the utility and widespread use of the CDI, researchers have recently been using psychometric models on CDI data to construct short, adaptive tests to reliably assess language ability using only a small subset of the CDI items [e.g., @mayor2019; @kachergis2021cat].
+<!--Inspired by the utility and widespread use of the CDI, researchers have recently been using psychometric models on CDI data to construct short, adaptive tests to reliably assess language ability using only a small subset of the CDI items [e.g., @mayor2019; @kachergis2021cat].
 These psychometric models typically come from the Item-Response Theory (IRT) framework [@Baker2001], which assumes that not only test-takers (here, children being reported on) have normally-distributed ability, but that items (words on the CDI) have normally-distributed difficulty.
 The efficacy of these IRT-based models depends on words varying in difficulty, in order for the test to be more informative of the ability level of each individual.
-For example, asking whether a 22-month-old produces the word "ball" is far less informative of that child's language ability than asking whether they produce "table", as 96% of 22-month-olds can produce the former, while only 47% produce the latter.
+For example, asking whether a 22-month-old produces the word "ball" is far less informative of that child's language ability than asking whether they produce "table", as 96% of 22-month-olds can produce the former, while only 47% produce the latter. -->
 
-While it is quite reasonable to expect that some CDI words are "easier" (i.e., more likely to be known by children) than others, and even to use these varying difficulties to predict variation in children's language ability, the use of psychometric models highlights the possibility that some CDI items may function differently (i.e., be more/less widely known) for different groups of children.
-The idea that some items on a test may show bias, favoring one group over another, is known as Differential Item Function (DIF; @holland1993differential]. 
+<!--While it is quite reasonable to expect that some CDI words are "easier" (i.e., more likely to be known by children) than others, and even to use these varying difficulties to predict variation in children's language ability, the use of psychometric models highlights the possibility that some CDI items may function differently (i.e., be more/less widely known) for different groups of children. -->
+
+While many languages show similar demographic effects on early word learning [e.g., the female advantage: @eriksson2012differences; and the first-born advantage: @frank2021], the size of these demographic effects vary across languages [see @frank2021, Ch. 6]. 
+Why might we see such variation?
+While it is possible that there is an underlying difference in language ability between demographic groups, could it also be possible that the tests are biased to some degree--and perhaps to a different degree in different languages?
+The idea that some items on a test may show bias, favoring one group over another, is known in psychometrics as Differential Item Function (DIF; @holland1993differential]. 
 The validity of any test with many items favoring one group over another (say, children from rural vs. urban households) is questionable, as the test may be overestimating the ability of test-takers in the former (rural) group, and/or underestimating the ability of the latter group -- and not because of any underlying mean difference in ability between the groups, but simply because the test is unfair [@camilli2013ongoing].
 For example, if a vocabulary test is composed almost entirely of the names of farm equipment, the test will underestimate the knowledge of urban children, who have experience of other contexts, despite being less familiar with farm equipment than their rural peers.
 Of course, there may in fact be some meaningful ability difference between demographic groups, as is likely the case for the female language advntage, which has been documented in many languages [@eriksson2012differences; @frank2021].
