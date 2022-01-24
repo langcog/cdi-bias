@@ -14,18 +14,18 @@ abstract: >
     Children's early language skill has been linked to later educational outcomes, making
     it important to accurately measure early language. Parent-reported instruments such as the 
     Communicative Development Inventories (CDIs) have been shown to provide valid, consistent 
-    measures of children's aggregate early language skill. However, CDIs are predominantly 
-    comprised of hundreds of vocabulary items, some of which may not be heard (and thus learned) 
-    equally often by children of varying backgrounds. Here, we use a database of American English 
-    CDIs to identify words that show strong bias for particular groups of children, on dimensions
-    of sex (male vs. female), race (white vs. non-white), and maternal education 
-    (high vs. low). For each dimension, we identify dozens of strongly biased items, and show that 
-    eliminating these items reduces the expected ability difference between groups. For sex, we
-    consider how to propose replacement words that may show less bias, on the basis of their 
-    relatively equal frequency in adult speech directed to male and female children.
+    measures of children's aggregate early language skill. However, CDIs contain
+    hundreds of vocabulary items, some of which may not be heard (and thus learned) equally
+    often by children of varying backgrounds. This study used a database of American English 
+    CDIs to identify words that showed strong bias for particular demographic groups of children, on 
+    dimensions of sex (male vs. female), race (white vs. non-white), and maternal education 
+    (high vs. low). For each dimension, we identified dozens of strongly biased items, and showed that 
+    eliminating these items reduced the expected ability difference between groups. Additionally,
+    we investigated how well the relative frequency of words spoken to young girls vs. boys predicted 
+    sex-based word learning bias, and discuss possible sources of demographic bias in early word learning.
     
 keywords: >
-    language acquisition; word learning; measuring instrument bias; development;
+    language acquisition; word learning; measuring instrument bias; demographics;
     
 output: cogsci2016::cogsci_paper
 #final-submission: \cogscifinalcopy
@@ -62,12 +62,11 @@ Yet maternal education, often used as a proxy for socioeconomic status (SES), ha
 Demographic factors are also predictive of language skill: first-born children tend to outpace their siblings, and female children tend to have better language skills than their age-matched male counterparts [@fenson1994] -- a sex-based verbal advantage that continues through high school [see @petersen2018gender for a review].
 
 However, it is also difficult to get a complete measure of young children's language skill: long recordings are prohibitively difficult to collect and transcribe [see @roy2015predicting, the exception that proves the rule], and yet any short recording (e.g., a 1-hour play session) will elicit only a small proportion of the words and constructions that children know. 
-Thus, researchers of early word learning have constructed tests with hundreds of words, with an intentional bias to select words that are more likely to be known by children.
+Thus, researchers of early word learning have constructed tests with hundreds of words, intentionally oversampling words that are more likely to be known by young children.
 
-We focus on one set of popular instruments, the MacArthur-Bates Communicative Development Inventories [CDIs; @Fenson2007]. 
-The CDIs are a set of parent-reported measures of children's productive and receptive language skills, which produce a low-cost and reliable way to estimate children's early language skills [@fenson1994].
-CDIs have shown good predictive validity [e.g., @fenson1994; Bornstein et al. 2012, Duff et al. 2015].
-Our focus will be on the vocabulary checklist portion of the CDI Words & Sentences (CDI:WS) form, comprised of 680 early-learned words across 22 categories (e.g., animals, vehicles, action words, pronouns) selected to assess the productive vocabulary of children 16 to 30 months of age.
+We focus on the MacArthur-Bates Communicative Development Inventories [CDIs; @Fenson2007], a set of parent-reported measures of children's productive and receptive language skills, which offer a low-cost and reliable way to estimate children's early language skills [@fenson1994].
+CDIs have shown good predictive validity [e.g., @fenson1994; @bornstein2012stability; @duff2015infant].
+Our primary focus is the vocabulary checklist portion of the CDI Words & Sentences (CDI:WS) form, comprised of 680 early-learned words across 22 categories (e.g., animals, vehicles, action words, pronouns) selected to assess the productive vocabulary of children 16 to 30 months of age.
 For each item on the CDI:WS, caregivers are asked to respond whether the target child has been heard to say (i.e. produce) the given item.[^1]
 Children's total vocabulary score on the CDI:WS is tightly correlated with other facets of early language (e.g., grammatical competence and gesture), suggesting that the language system is "tightly woven" [@frank2021].
 Due to these desirable properties, CDIs have been adapted to dozens of languages, and a central repository of CDI data contributed from all over the world has been created [Wordbank; @frank2017; @frank2021].
@@ -603,7 +602,7 @@ However, the best way to estimate endogenous differences in ability (rather than
 Future research may also look into the specific items that are easier for one group than another, and determine whether these differences can be accounted for by different environmental contexts. 
 For example, it is striking that many of the extrema favoring high-SES children are animals and animal sounds (e.g., "grrr", "quack quack", "woof woof", "baa baa", "duck", "sheep", "giraffe", "zebra"): do high-SES households visit the zoo more, or do they often engage in other activities related to naming animals and noises they make?
 If certain high-SES activities are driving early word learning for these children, what are the activities (and associated vocabulary) that low-SES households are instead engaging in?
-A fair test of children's early vocabulary would contain a representative sample of words from all activities that children engage in, across demographic groups.
+A truly fair test of children's early vocabulary would contain a representative sample of words from all activities that children engage in, across demographic groups.
 
 # Acknowledgements
 
