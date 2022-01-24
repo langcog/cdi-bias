@@ -59,12 +59,12 @@ Children's early vocabulary growth is assumed to reflect not only their exposure
 Children show both consistency in some skills across development, as well as significant influence from external factors.
 For example, @bornstein2016stability found stability in core language skills across 10 years of children's development, despite changes in maternal income and education over the study period.
 Yet maternal education, often used as a proxy for socioeconomic status (SES), has also been found to be associated with children's language processing and vocabulary by 18 months [@fernald2013ses], and to be predictive of later educational outcomes [@marchman2008speed; see @schwab2016 for a review].
-Demographic factors are also predictive of language skill: first-born children tend to outpace their siblings, and female children tend to have better language skills than their age-matched male counterparts [@fenson1994] -- a sex-based verbal advantage that continues through high school [see @petersen2018gender for a review].
+Other demographic factors are also predictive of language skill: first-born children tend to outpace their siblings, and female children tend to have better language skills than their age-matched male counterparts [@frank2021; @eriksson2012differences] -- a sex-based verbal advantage that continues through high school [see @petersen2018gender for a review].
 
 However, it is also difficult to get a complete measure of young children's language skill: long recordings are prohibitively difficult to collect and transcribe [see @roy2015predicting, the exception that proves the rule], and yet any short recording (e.g., a 1-hour play session) will elicit only a small proportion of the words and constructions that children know. 
 Thus, researchers of early word learning have constructed tests with hundreds of words, intentionally oversampling words that are more likely to be known by young children.
 
-We focus on the MacArthur-Bates Communicative Development Inventories [CDIs; @Fenson2007], a set of parent-reported measures of children's productive and receptive language skills, which offer a low-cost and reliable way to estimate children's early language skills [@fenson1994].
+We focus on the MacArthur-Bates Communicative Development Inventories [CDIs; @fenson1994; @Fenson2007], a set of parent-reported measures of children's productive and receptive language skills, which offer a low-cost and reliable way to estimate children's early language skills [@fenson1994].
 CDIs have shown good predictive validity [e.g., @fenson1994; @bornstein2012stability; @duff2015infant].
 Our primary focus is the vocabulary checklist portion of the CDI Words & Sentences (CDI:WS) form, comprised of 680 early-learned words across 22 categories (e.g., animals, vehicles, action words, pronouns) selected to assess the productive vocabulary of children 16 to 30 months of age.
 For each item on the CDI:WS, caregivers are asked to respond whether the target child has been heard to say (i.e. produce) the given item.
@@ -73,6 +73,8 @@ Due to these desirable properties, CDIs have been adapted to dozens of languages
 
 <!-- [^1]: The CDI: Words and Gestures form includes a subset of the CDI:WS items and targets children 12 to 18 months of age, measuring both comprehension and production. -->
 
+<!-- nix the CAT transition, raise the issue of potential test bias somehow-->
+
 Inspired by the utility and widespread use of the CDI, researchers have recently been using psychometric models on CDI data to construct short, adaptive tests to reliably assess language ability using only a small subset of the CDI items [e.g., @mayor2019; @kachergis2021cat].
 These psychometric models typically come from the Item-Response Theory (IRT) framework [@Baker2001], which assumes that not only test-takers (here, children being reported on) have normally-distributed ability, but that items (words on the CDI) have normally-distributed difficulty.
 The efficacy of these IRT-based models depends on words varying in difficulty, in order for the test to be more informative of the ability level of each individual.
@@ -80,17 +82,22 @@ For example, asking whether a 22-month-old produces the word "ball" is far less 
 
 While it is quite reasonable to expect that some CDI words are "easier" (i.e., more likely to be known by children) than others, and even to use these varying difficulties to predict variation in children's language ability, the use of psychometric models highlights the possibility that some CDI items may function differently (i.e., be more/less widely known) for different groups of children.
 The idea that some items on a test may show bias, favoring one group over another, is known as Differential Item Function (DIF; @holland1993differential]. 
-On any given test, it is clearly undesirable to have more items favoring one group (say, children from rural households) over another (urban children), as the test will overestimate the ability of test-takers in the former (rural) group -- and not because of any underlying mean difference in ability between the groups, but simply because the test is unfair [@camilli2013ongoing].
-A variety of statistical methods for detecting DIF have been proposed, and investigations have in several instances identified DIF for many items on tests favoring one group over another (e.g., rural vs. urban).
-Our goal here is to test the items on the American CDI:WS for DIF along three main axes: sex (male vs. female), maternal education (no more than secondary vs. at least some college), and race (white vs. non-white).
+The validity of any test with many items favoring one group over another (say, children from rural vs. urban households) is questionable, as the test may be overestimating the ability of test-takers in the former (rural) group, and/or underestimating the ability of the latter group -- and not because of any underlying mean difference in ability between the groups, but simply because the test is unfair [@camilli2013ongoing].
+For example, if a vocabulary test is composed almost entirely of the names of farm equipment, the test will underestimate the knowledge of urban children, who have experience of other contexts, despite being less familiar with farm equipment than their rural peers.
+Of course, there may in fact be some meaningful ability difference between demographic groups, as is likely the case for the female language advntage, which has been documented in many languages [@eriksson2012differences; @frank2021].
+However, these demographic differences in early language learning have not been investigated as potentially due to DIF.
+That is the contribution of the present study.
+Specifically, our goal is to test the 680 vocabulary items on the American CDI:WS for DIF along three dichotomized demographic dimensions: sex (male vs. female), maternal education (no more than secondary vs. at least some college), and race (white vs. non-white).
 
+<!-- A variety of statistical methods for detecting DIF have been proposed, and investigations have in several instances identified DIF for many items on tests favoring one group over another. -->
 
 The outline of this paper is as follows.
-First, we introduce the Wordbank data and the IRT model, and use it to examine the overall size of demographic differences in early word learning.
-We then fit the IRT model to each group along each demographic dimension, and examine the item parameters for evidence of DIF, noting in particular how many items are significantly biased in favor of each group.
-We identify a set of suspect items to eliminate (or in the future, replace), and provide updated estimates of the effect size of these demographic variables, were the biased items to be eliminated.
-<!--Next, using a corpus of child-directed speech, we examine the extent to which variation in word frequencies heard by boys vs. girls predicts sex-based DIF.-->
-Finally, we provide recommendations for next steps to be taken to identify and replace biased items on the CDI.
+First, we introduce the Wordbank data and the IRT model, and examine the overall size of demographic differences in early word learning based on the full CDI:WS.
+We then fit the IRT model to both groups for each demographic factor, and look at the item parameters for evidence of DIF, noting in particular how many items are significantly biased in favor of each group, and describing them qualitatively.
+Next, we use these item parameters to systematically prune biased items from the CDI:WS, and examine how the estimated size of demographic differences change as we prune more items.
+<!-- We identify a set of suspect items to eliminate (or in the future, replace), and provide updated estimates of the effect size of these demographic variables, were the biased items to be eliminated.-->
+Finally, using a corpus of child-directed speech, we examine the extent to which variation in word frequencies heard by boys vs. girls predicts sex-based DIF.
+Based on these analyses, we provide recommendations for next steps to be taken to identify and potentially replace items on the CDI showing demographic bias.
 
 # Methods
 
@@ -146,7 +153,7 @@ Children with high latent ability ($\theta$) will be more likely to produce any 
 
 In the multigroup Rasch model, an item's difficulty is allowed to vary by group. 
 For example, in the sex-based multigroup model, item $i$'s difficulty is $b_{i}^{female}$ for females, and $b_{i}^{male}$ for males.
-In the quest to identify DIF, a multigroup Rasch model will be fitted for each demographic dimension of interest (sex, maternal education, and ethnicity), and we will examine the between-group difficulty difference for each item (e.g., $d_i = b_{i}^{female} - b_{i}^{male}$).
+To identify DIF, a multigroup Rasch model will be fitted for each demographic dimension of interest (sex, maternal education, and ethnicity), and we will examine the between-group difficulty difference for each item (e.g., $d_i = b_{i}^{female} - b_{i}^{male}$).
 If there is no DIF for a given item, then $d_i \approx 0$ as the two groups find the item equally difficult.
 
 
@@ -260,7 +267,7 @@ These distributions are generated by drawing 10,000 imputations from the item pa
 
 Figures 2-4 show GLIMMERs for a selection of CDI items for sex, SES, and race, respectively.
 The full GLIMMERs, with all 680 CDI:WS items, are available on [OSF](https://osf.io/57rsw/?view_only=2b6ecb61fe08458293af7421d276932a), but were too large to include here.
-Nonetheless, it is important to inspect the full plots, for if there is a cluster of items in a GLIMMER, the analyst may conclude that these items are strong candidates for DIF on that dimension.
+It is important, however, to inspect the full plots, for if there is a cluster of items in a GLIMMER, the analyst may conclude that these items are strong candidates for DIF on that dimension.
 For example, there is some clustering at the top and bottom of Figure 2: at the top, "vagina", "tights", "dress (object)", and "doll" form a cluster of items that are much easier for females, while at the bottom, "penis" stands out as much easier for males.
 For the maternal education and race GLIMMERs (Figures 3 and 4)--and in the rest of the full sex GLIMMER, there are not clusters, but rather a continuum of smoothly varying differences with overlap. 
 This makes identifying items with DIF quite difficult, as different methods are likely to yield inconsistent results [@stenhaug2021treading].
