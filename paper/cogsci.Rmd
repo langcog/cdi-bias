@@ -50,6 +50,13 @@ library(ggpubr)
 library(ggrepel)
 
 theme_set(theme_classic(base_size=10)) 
+
+# color-blind palette
+cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+sex_colors = cbp1[2:3]
+eth_colors = cbp1[4:5]
+ses_colors = cbp1[6:7]
 ```
 
 # Introduction 
@@ -82,7 +89,7 @@ For example, asking whether a 22-month-old produces the word "ball" is far less 
 
 While many languages show similar demographic effects on early word learning [e.g., the female advantage: @eriksson2012differences; and the first-born advantage: @frank2021], the size of these demographic effects vary across languages [see @frank2021, Ch. 6]. 
 Why might we see such variation?
-While it is possible that there is an underlying difference in language ability between demographic groups, could it also be possible that the tests are biased to some degree--and perhaps to a different degree in different languages?
+While it is possible that there is an underlying difference in mean language ability between demographic groups, and that cross-linguistic variation is driven by differences in the language environments of different cultures, could it also be possible that the tests are biased to some degree--and perhaps to a different degree in different languages?
 The idea that some items on a test may show bias, favoring one group over another, is known in psychometrics as Differential Item Function (DIF; @holland1993differential]. 
 The validity of any test with many items favoring one group over another (say, children from rural vs. urban households) is questionable, as the test may be overestimating the ability of test-takers in the former (rural) group, and/or underestimating the ability of the latter group -- and not because of any underlying mean difference in ability between the groups, but simply because the test is unfair [@camilli2013ongoing].
 For example, if a vocabulary test is composed almost entirely of the names of farm equipment, the test will underestimate the knowledge of urban children, who have experience of other contexts, despite being less familiar with farm equipment than their rural peers.
@@ -161,19 +168,10 @@ If there is no DIF for a given item, then $d_i \approx 0$ as the two groups find
 
 # Results
 
-We will first examine the size of demographic effects on language ability in a baseline Rasch model fitted without regard to demographic group.
-We then fit a multigroup Rasch model for each examine evidence for DIF, assuming that 
-Finally, we prune the CDI of items showing varying degrees of DIF
-
-```{r colors}
-# color-blind palette
-cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
-          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-sex_colors = cbp1[2:3]
-eth_colors = cbp1[4:5]
-ses_colors = cbp1[6:7]
-```
-
+First, we will examine the size of demographic effects on language ability in a baseline Rasch model fitted without regard to demographic group.
+Then we will fit a multigroup Rasch model for each demographic factor, and characterize the between-group differences in item difficulties.
+Next, we will re-examine the size of demographic effects after pruning biased items from the CDI:WS using a varying threshold.
+Finally, we measure the strength of association between sex-related differences in language input and the degree of sex-related DIF.
 
 ```{r load-data}
 load(here("data/glimmer_prodWS_models.Rds"))
@@ -218,8 +216,7 @@ sex_reg <- summary(lm(ability ~ age_sc * sex, data=d_demo))$coefficients # R^2=.
 ```
 
 ## Demographic effects in baseline Rasch model
-
-To contextualize the later DIF results, we first fitted a baseline Rasch model to the entire dataset, without demographic information.
+A baseline Rasch model was fitted to the entire dataset, without demographic information.
 Figure 1 shows children's language ability vs. age by demographic group from the baseline Rasch model, which assumes no DIF (i.e., equal item parameters for all groups).
 A linear regression for each demographic group, with age (centered) and its interaction, showed significant effects. 
 Female children had higher language ability than male children ($\beta=0.56$, $p<.001$), with no significant interaction with age ($\beta=0.02$, $p=.10$).
@@ -234,7 +231,7 @@ The average advantage for high-SES children at 23-25 months is $\theta_{high-low
 The average advantage for white vs. non-white children in this age range is $\theta_{w-nonw} = 0.52$, an average of 45 more produced CDI items.
 -->
 
-```{r baseline-ability-vs-age, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.3, fig.height=6, set.cap.width=T, num.cols.cap=1, fig.cap = "Language ability vs. age by demographic group, from the Rasch model."}
+```{r baseline-ability-vs-age, out.width="\\linewidth", fig.env = "figure", fig.pos = "h", fig.align='center', fig.width=3.3, fig.height=6, set.cap.width=T, num.cols.cap=1, fig.cap = "Language ability vs. age by demographic group, from the Rasch model."}
 p1 <- d_demo %>% filter(!is.na(sex)) %>%
   ggplot(aes(x=jitter(age), y=ability, color=sex)) + 
   geom_point(alpha=.1) + geom_smooth() + theme_classic(base_size=9) + 
@@ -261,10 +258,10 @@ ggarrange(p1, p2, p3, ncol=1)
 
 ## Identifying biased CDI items
 
-The first step we take to identify CDI items with DIF is to create GLIMMERs (Graphs of Logits Imputed Multiply with Means Equal; @stenhaug2021treading), which visualize between-item variation in group performance differences.
+To aid in identifying CDI items with DIF we created GLIMMERs (Graphs of Logits Imputed Multiply with Means Equal; @stenhaug2021treading), which visualize between-item variation in group performance differences.
 These parameters are drawn from a fitted multigroup Rasch model for each demographic variable (sex, SES, and race), with the assumption that the mean language ability in each group is the same (e.g. for sex, $\mu_{male}=\mu_{female}=0$), thus pushing all between-group variation into the item difficulty parameters.
 For the case of sex, where we believe $\mu_{female}>\mu_{male}$, this means we may expect to find many items with difficulty $b_i^{female} < b_i^{male}$, but we can still examine the distribution of differences in item difficulty ($d_j = b_i^{male} - b_i^{female}$) for outliers.
-To give analysts a sense of the uncertainty about the existence of DIF, GLIMMER plots show distributions of parameter differences rather than point estimates. 
+GLIMMER plots show distributions of parameter differences rather than point estimates to convey the uncertainty about the existence of DIF.
 These distributions are generated by drawing 10,000 imputations from the item parameter covariance matrix.
 
 Figures 2-4 show GLIMMERs for a selection of CDI items for sex, SES, and race, respectively.
@@ -273,7 +270,25 @@ It is important, however, to inspect the full plots, for if there is a cluster o
 For example, there is some clustering at the top and bottom of Figure 2: at the top, "vagina", "tights", "dress (object)", and "doll" form a cluster of items that are much easier for females, while at the bottom, "penis" stands out as much easier for males.
 For the maternal education and race GLIMMERs (Figures 3 and 4)--and in the rest of the full sex GLIMMER, there are not clusters, but rather a continuum of smoothly varying differences with overlap. 
 This makes identifying items with DIF quite difficult, as different methods are likely to yield inconsistent results [@stenhaug2021treading].
-Nonetheless, we describe the distributions of item-level group difficulty differences, and identify extreme values, flagging items with difficulty differences that were outside 2 standard deviations of the mean of that distribution.
+Hence, we next characterized the distributions of the item-level group difficulty differences, and measured the influence of pruning a varying number of items on the demographic effect sizes.
+
+
+```{r sex-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "h", fig.align='center', fig.width=3.2, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the sex bias model. Words at the top are easier to learn for females, while those at the bottom are easier for males."}
+#img <- png::readPNG("figs/lab_logo_stanford.png")
+#grid::grid.raster(img)
+knitr::include_graphics("figs/smGLIMMER_sex_prodWS.pdf")
+```
+
+
+```{r ses-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "h", fig.align='center', fig.width=3, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the SES bias model. Words at the top are easier to learn for children from low-SES families, while those at the bottom are easier for those from high-SES families."}
+knitr::include_graphics("figs/smGLIMMER_ses_prodWS.pdf")
+```
+
+
+```{r eth-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "h", fig.align='center', fig.width=3, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the ethnicity bias model. Words at the top are easier to learn for children from low-SES families, while those at the bottom are easier for those from high-SES families."}
+knitr::include_graphics("figs/smGLIMMER_eth_prodWS.pdf")
+```
+
 
 ```{r get-dif-dfs}
 extract_group_df <- function(group_model, groups=c("Male","Female")) {
@@ -311,7 +326,7 @@ mm_eth <- extract_group_df(mod_intuitive_eth, groups=c("Nonwhite","White"))
 
 
 ```{r train-pruned-models, eval=F}
-# varying thresholds
+# varying SD thresholds (SLOW TO RUN)
 prune_dat <- tibble()
 for(thresh in seq(.25, 3.0, .25)) {
   tmp_sex <- get_extreme_item_difficulty_differences(mm_sex, sd_thresh=thresh) # min: -.53 max: 1.06
@@ -372,19 +387,9 @@ all_extreme <- rbind(subset(mm_sex, extreme),
 #intersect(subset(mm_ses, extreme)$definition, subset(mm_eth, extreme)$definition)
 ```
 
-```{r pruned-coefs, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.4, fig.height=4.75, set.cap.width=T, num.cols.cap=1, fig.cap = "Size of demographic effects (regression coefficients) vs. the threshold of pruned items."}
+
+```{r pruned-coefs, out.width="\\linewidth", fig.env = "figure", fig.pos = "h", fig.align='center', fig.width=3.4, fig.height=4.75, set.cap.width=T, num.cols.cap=1, fig.cap = "Size of demographic effects (regression coefficients) with different pruning thresholds."}
 load(here("data/pruned_demo_coefs.Rdata"))
-
-# prune_dat %>% rename(c(beta_sex=sex_beta, beta_ses=ses_beta, beta_eth=eth_beta)) %>%
-#   pivot_longer(c("extreme_sex","extreme_ses","extreme_eth","beta_sex","beta_ses","beta_eth"), 
-#                            names_to=c("type", "demo"), names_sep="_") %>%
-#   pivot_wider(names_from=type, values_from=value) %>%
-#   mutate(Dimension = ifelse(demo=="ses", "maternal ed", ifelse(demo=="eth", "race", demo))) %>%
-#   ggplot(aes(x=SDthreshold, y=beta, color=extreme)) + facet_wrap(. ~ Dimension, scales="free") + 
-#   geom_point() + theme(legend.position = "bottom") + # geom_line() +
-#   labs(color="Excluded items") + 
-#   xlab("Exclusion Threshold (SDs)") + ylab("Regression coefficient (beta)")
-
 
 pdat <- prune_dat %>% rename(c(beta_sex=sex_beta, beta_ses=ses_beta, beta_eth=eth_beta)) %>%
   pivot_longer(c("extreme_sex","extreme_ses","extreme_eth","beta_sex","beta_ses","beta_eth"), 
@@ -394,19 +399,19 @@ pdat <- prune_dat %>% rename(c(beta_sex=sex_beta, beta_ses=ses_beta, beta_eth=et
   
 pr1 <- pdat %>% filter(Dimension=="sex") %>%
   ggplot(aes(x=SDthreshold, y=beta, color=extreme)) + 
-  geom_point() + theme(legend.position = "bottom") + 
+  geom_point() + #theme(legend.position = "bottom") + 
   labs(color="Excluded items") + ylim(-.7, -.4) + ggtitle("Sex") +
   xlab("Exclusion Threshold (SDs)") + ylab("Coefficient (beta)")
 
 pr2 <- pdat %>% filter(Dimension=="maternal ed") %>%
   ggplot(aes(x=SDthreshold, y=beta, color=extreme)) + 
-  geom_point() + theme(legend.position = "bottom") + 
+  geom_point() + 
   labs(color="Excluded items") + ylim(-.3, -.1) + ggtitle("Maternal Education") +
   xlab("Exclusion Threshold (SDs)") + ylab("Coefficient (beta)")
 
 pr3 <- pdat %>% filter(Dimension=="race") %>%
   ggplot(aes(x=SDthreshold, y=beta, color=extreme)) + 
-  geom_point() + theme(legend.position = "bottom") + 
+  geom_point() + 
   labs(color="Excluded items") + ylim(.35, .55) + ggtitle("Race") +
   xlab("Exclusion Threshold (SDs)") + ylab("Coefficient (beta)")
 
@@ -428,12 +433,15 @@ With the mean and median difficulty differences close to 0, and roughly half of 
 For race, the median difficulty difference (nonwhite-white) was `r round(median(mm_eth$d_diff),2)` (M=`r round(mean(mm_eth$d_diff),2)`, sd=`r round(sd(mm_eth$d_diff),2)`), with `r length(which(mm_eth$d_diff>0))`/680 items being easier for white than non-white children, revealing a fairly pervasive advantage for white children on CDI items. 
 
 
-This identified 25 items with extreme sex-based difficulty differences, only 7 of which were easier for females, with the other 18 items favoring males. <!-- thus, removing these extrema would actually lower male children's vocabulary scores..] -->
+<!--
+## Recommended Pruning Threshold: 2SD
+Considering just those items whose difficulty was >2SD from the mean difficulty difference identified 25 items with extreme sex-based difficulty differences, only 7 of which were easier for females, with the other 18 items favoring males.
 For SES, 39 extrema were identified, only 13 of which were easier for low-SES children.
 For race, 31 extrema were identified, only 11 of which were easier for non-white children.
 Thus, while if anything the bulk of the extrema in the sex-based model advantaged the lower language ability group (males), the extrema in the other two models mostly favored the advantaged groups: 26/39 extreme items in the SES model favored high-SES children, and 20/31 items in the race model favored white children.
 17 CDI items were identified as extrema in more than one model: "tractor" and "vroom" were extreme in all three models, "choo choo" was extreme in both SES and sex models, "give me five!" was extreme in both race and sex models, and 13 other items were extreme in both SES and race models ("grrr", "moo", "quack quack", "uh oh", "duck", "owl", "candy", "gum", "walker", "daddy", "pet's name", "up", and "so").
 In our final analysis, we explore the effect of pruning the 15 items that were extreme in both SES and race models.
+-->
 
 ```{r items-to-remove}
 prune_defs <- c("tractor", "vroom", "grrr", "moo", "quack quack", "uh oh", "duck", "owl", "candy", "gum", "walker", "daddy*", "pet's name", "up", "so") # also "choo choo" and "give me five!" ?
@@ -455,22 +463,6 @@ save(file = here("data/eng_Ws_prod_mod_1pl_pruned.Rds"), "m0", "coefs_1pl", "fsc
 ```
 
 
-```{r sex-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.2, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the sex bias model. Words at the top are easier to learn for females, while those at the bottom are easier for males."}
-#img <- png::readPNG("figs/lab_logo_stanford.png")
-#grid::grid.raster(img)
-knitr::include_graphics("figs/smGLIMMER_sex_prodWS.pdf")
-```
-
-
-```{r ses-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the SES bias model. Words at the top are easier to learn for children from low-SES families, while those at the bottom are easier for those from high-SES families."}
-knitr::include_graphics("figs/smGLIMMER_ses_prodWS.pdf")
-```
-
-
-```{r eth-glimmer, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "GLIMMER plot of a sample of CDI:WS words from the ethnicity bias model. Words at the top are easier to learn for children from low-SES families, while those at the bottom are easier for those from high-SES families."}
-knitr::include_graphics("figs/smGLIMMER_eth_prodWS.pdf")
-```
-
 
 ```{r, eval=F, include=F}
 View(subset(mm_sex, extreme)) # 25 extreme (outside 2sd) - 7 favoring girls, 18 favoring boys
@@ -483,7 +475,11 @@ View(subset(mm_eth, extreme)) # 31 extreme - 11 favoring nonwhite, 20 favoring w
 
 ## Demographic effects after pruning
 
-```{r load-pruned}
+Given the smoothly-varying distributions of DIF shown by each demographic factor, we chose to evaluate multiple thresholds for pruning the extreme-valued items from each distribution.
+For each demographic factor, we pruned items with difficulty difference from >.25 SD to >3 SD.
+Shown in Figure 5, the regression coefficient for sex was closest to 0 when almost all items were trimmed (>.25SD; 661/680 items trimmed)
+
+```{r old-load-pruned, include=F, eval=F}
 # (2sd threshold)
 load(here("data/eng_Ws_prod_mod_1pl_pruned.Rds"))
 
@@ -502,13 +498,14 @@ sex_reg_pr <- summary(lm(ability_pr ~ age_sc * sex, data=d_demo))$coefficients #
 # if due to environmental 
 ```
 
-
+<!-- OLD
 We identified 76 CDI items that function quite differently across demographic groups, and chose to prune just the 15 items with large difficulty differences for both SES and race. 
 After pruning just these 15 items from the CDI:WS and re-fitting a Rasch IRT model, regressions predicting ability with each demographic variable (and age, centered) showed reduced main effects of SES ($\beta=0.20$ vs. $\beta=0.23$) and race ($\beta=0.48$ vs. $\beta=0.50$).
 Although these are small reductions in the SES and race effect sizes, we find them striking as we pruned only 2.2% of the CDI:WS items (and only 20% of the 76 extrema we identified), and did not specifically prune items that were biased against the disadvantaged groups (non-white, low-SES).
+-->
 
 
-```{r demo-ability, include=T, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.5, fig.height=7.5, set.cap.width=T, num.cols.cap=1, fig.cap = "Scatterplots showing item difficulty per demographic group along each dimension."}
+```{r demo-ability, include=T, out.width="\\linewidth", fig.env = "figure", fig.pos = "h", fig.align='center', fig.width=3.5, fig.height=7.5, set.cap.width=T, num.cols.cap=1, fig.cap = "Scatterplots showing item difficulty per demographic group along each dimension."}
 
 p1 <- mm_sex %>%
   ggplot(aes(x=-d_g1, y=-d_g2)) + geom_point(alpha=.2) + # color=extreme
@@ -531,14 +528,6 @@ p3 <- mm_eth %>%
 # p1 <- mm_sex %>% 
 #   ggplot(aes(x=d_diff)) + # , color=extreme, fill=extreme
 #     geom_density(alpha=.2) + xlab("Ability") 
-# 
-# p2 <- mm_ses %>%
-#   ggplot(aes(x=d_diff)) + 
-#     geom_density(alpha=.2) + xlab("Ability") 
-# 
-# p3 <- mm_eth %>%
-#   ggplot(aes(x=d_diff)) + 
-#     geom_density(alpha=.2) + xlab("Ability") 
 
 ggarrange(p1, p2, p3, ncol=1)
 ```
@@ -554,7 +543,7 @@ Similar to the approach taken by @braginsky2016gender, we used the CHILDES corpu
 
 Overall, the correlation between the proportion of times a word was spoken to a female child and the size of the female (vs. male) advantage for that CDI word was modest, but significant ($r=0.19$, $p<.001$).
 
-```{r, include=T, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.5, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "CHILDES frequency of input to male vs. female children."}
+```{r, include=F, out.width="\\linewidth", fig.env = "figure", fig.pos = "h", fig.align='center', fig.width=3.5, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "CHILDES frequency of input to male vs. female children."}
 type_freqs = readRDS("../data/type_freqs.rds")
 type_counts = readRDS("../data/type_counts.rds")
 type_counts_smoothed = readRDS("../data/type_counts_smoothed.rds")
