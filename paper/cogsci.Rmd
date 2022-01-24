@@ -67,15 +67,15 @@ Thus, researchers of early word learning have constructed tests with hundreds of
 We focus on the MacArthur-Bates Communicative Development Inventories [CDIs; @Fenson2007], a set of parent-reported measures of children's productive and receptive language skills, which offer a low-cost and reliable way to estimate children's early language skills [@fenson1994].
 CDIs have shown good predictive validity [e.g., @fenson1994; @bornstein2012stability; @duff2015infant].
 Our primary focus is the vocabulary checklist portion of the CDI Words & Sentences (CDI:WS) form, comprised of 680 early-learned words across 22 categories (e.g., animals, vehicles, action words, pronouns) selected to assess the productive vocabulary of children 16 to 30 months of age.
-For each item on the CDI:WS, caregivers are asked to respond whether the target child has been heard to say (i.e. produce) the given item.[^1]
+For each item on the CDI:WS, caregivers are asked to respond whether the target child has been heard to say (i.e. produce) the given item.
 Children's total vocabulary score on the CDI:WS is tightly correlated with other facets of early language (e.g., grammatical competence and gesture), suggesting that the language system is "tightly woven" [@frank2021].
 Due to these desirable properties, CDIs have been adapted to dozens of languages, and a central repository of CDI data contributed from all over the world has been created [Wordbank; @frank2017; @frank2021].
 
-[^1]: The CDI: Words and Gestures form includes a subset of the CDI:WS items and targets children 12 to 18 months of age, measuring both comprehension and production.
+<!-- [^1]: The CDI: Words and Gestures form includes a subset of the CDI:WS items and targets children 12 to 18 months of age, measuring both comprehension and production. -->
 
 Inspired by the utility and widespread use of the CDI, researchers have recently been using psychometric models on CDI data to construct short, adaptive tests to reliably assess language ability using only a small subset of the CDI items [e.g., @mayor2019; @kachergis2021cat].
-These psychometric models typically come from the Item-Response Theory (IRT) framework [@Baker2001], which assumes that not only test-takers (here, children) have normally-distributed ability, but that items (words on the CDI) have normally-distributed difficulty.
-The very efficacy of these IRT-based models depends on words varying in difficulty, and hence being more/less informative of the ability level of different individuals.
+These psychometric models typically come from the Item-Response Theory (IRT) framework [@Baker2001], which assumes that not only test-takers (here, children being reported on) have normally-distributed ability, but that items (words on the CDI) have normally-distributed difficulty.
+The efficacy of these IRT-based models depends on words varying in difficulty, in order for the test to be more informative of the ability level of each individual.
 For example, asking whether a 22-month-old produces the word "ball" is far less informative of that child's language ability than asking whether they produce "table", as 96% of 22-month-olds can produce the former, while only 47% produce the latter.
 
 While it is quite reasonable to expect that some CDI words are "easier" (i.e., more likely to be known by children) than others, and even to use these varying difficulties to predict variation in children's language ability, the use of psychometric models highlights the possibility that some CDI items may function differently (i.e., be more/less widely known) for different groups of children.
@@ -86,7 +86,7 @@ Our goal here is to test the items on the American CDI:WS for DIF along three ma
 
 
 The outline of this paper is as follows.
-First, we introduce the Wordbank data and the IRT model, and use it examine the overall size of demographic differences in early word learning.
+First, we introduce the Wordbank data and the IRT model, and use it to examine the overall size of demographic differences in early word learning.
 We then fit the IRT model to each group along each demographic dimension, and examine the item parameters for evidence of DIF, noting in particular how many items are significantly biased in favor of each group.
 We identify a set of suspect items to eliminate (or in the future, replace), and provide updated estimates of the effect size of these demographic variables, were the biased items to be eliminated.
 <!--Next, using a corpus of child-directed speech, we examine the extent to which variation in word frequencies heard by boys vs. girls predicts sex-based DIF.-->
@@ -135,7 +135,7 @@ Again due to data sparsity, we binarized the `r ses_tab["high"]` children whose 
 ## Rasch Model
 
 The Rasch model, also known as the 1-parameter logistic (1PL) model, is the simplest Item Response Theory model, and is thus the easiest to use to investigate potential differences in item function across different groups of participants.
-The goal of the Rasch model is to jointly estimate for each child $j$ a latent ability $\theta_j$, and for each item $i$ a difficulty parameter $b_i$.
+The Rasch model jointly estimates for each child $j$ a latent ability $\theta_j$, and for each item $i$ a difficulty parameter $b_i$.
 In the model, the probability of child $j$ knowing (i.e., producing or understanding) a given item $i$ is 
 
 $$P_{i}(x_i = 1 | b_{i},\theta_j ) = \frac{1}{1 + e^{-D(\theta_j - b_i )}}$$
@@ -144,7 +144,7 @@ where $D$ is a constant scaling parameter ($D=1.702$) which makes the logistic c
 Child ability ($\theta$) and item difficulty ($b$) distributions are standardized (i.e., mean of 0), and expected to be normally-distributed. 
 Children with high latent ability ($\theta$) will be more likely to produce any given item than children with lower latent ability, and more difficult items will be produced by fewer children (at any given $\theta$) than easier items.
 
-In the multigroup Rasch model, an item's difficulty is allowed to vary depending on which group an individual child belongs to. 
+In the multigroup Rasch model, an item's difficulty is allowed to vary by group. 
 For example, in the sex-based multigroup model, item $i$'s difficulty is $b_{i}^{female}$ for females, and $b_{i}^{male}$ for males.
 In the quest to identify DIF, a multigroup Rasch model will be fitted for each demographic dimension of interest (sex, maternal education, and ethnicity), and we will examine the between-group difficulty difference for each item (e.g., $d_i = b_{i}^{female} - b_{i}^{male}$).
 If there is no DIF for a given item, then $d_i \approx 0$ as the two groups find the item equally difficult.
@@ -212,7 +212,7 @@ sex_reg <- summary(lm(ability ~ age_sc * sex, data=d_demo))$coefficients # R^2=.
 
 To contextualize the later DIF results, we first fitted a baseline Rasch model to the entire dataset, without demographic information.
 Figure 1 shows children's language ability vs. age by demographic group from the baseline Rasch model, which assumes no DIF (i.e., equal item parameters for all groups).
-A linear regression for each demographic group, with age (centered) and its interaction, showed significant effects in the expected directions, as can also be seen in the figure. 
+A linear regression for each demographic group, with age (centered) and its interaction, showed significant effects. 
 Female children had higher language ability than male children ($\beta=0.56$, $p<.001$), with no significant interaction with age ($\beta=0.02$, $p=.10$).
 High-SES children had higher language ability than low-SES children ($\beta=0.23$, $p=.02$), an advantage that grew with age ($\beta=0.11$, $p<.001$).
 White children had higher language ability than non-white children ($\beta=0.50$, $p<.001$), an advantage that grew with age ($\beta=0.08$, $p<.001$).
