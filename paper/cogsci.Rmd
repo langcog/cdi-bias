@@ -373,9 +373,9 @@ save(prune_dat, file=here("data/pruned_demo_coefs.Rdata"))
 
 ```{r}
 # 2SD threshold
-mm_sex <- get_extreme_item_difficulty_differences(mm_sex) # min: -.53 max: 1.06
-mm_ses <- get_extreme_item_difficulty_differences(mm_ses) # min: -1.07 max: 1.13
-mm_eth <- get_extreme_item_difficulty_differences(mm_eth) # min: -.64 max: 1.56
+mm_sex <- get_extreme_item_difficulty_differences(mm_sex, sd_thresh=2.25) # min: -.53 max: 1.06
+mm_ses <- get_extreme_item_difficulty_differences(mm_ses, sd_thresh=2.25) # min: -1.07 max: 1.13
+mm_eth <- get_extreme_item_difficulty_differences(mm_eth, sd_thresh=2.25) # min: -.64 max: 1.56
 
 all_extreme <- rbind(subset(mm_sex, extreme),
                      subset(mm_ses, extreme),
@@ -475,6 +475,19 @@ View(subset(mm_eth, extreme)) # 31 extreme - 11 favoring nonwhite, 20 favoring w
 
 ## Demographic effects after pruning
 
+```{r, include=F}
+# find minimal effect sizes on each demographich dimension
+opt_sex = pdat[which(pdat$beta==max(subset(pdat, Dimension=="sex")$beta)),]$beta
+opt_ME = pdat[which(pdat$beta==max(subset(pdat, Dimension=="maternal ed")$beta)),]$beta
+opt_race = pdat[which(pdat$beta==min(subset(pdat, Dimension=="race")$beta)),]$beta
+
+prune_dat <- prune_dat %>%
+  mutate(SSE = (sex_beta-opt_sex)^2 + (ses_beta-opt_ME)^2 + (eth_beta-opt_race)^2,
+         pct_overlap = extreme_total / (extreme_ses + extreme_eth + extreme_sex)) %>%
+  arrange(SSE)
+```
+
+
 Given the smoothly-varying distributions of DIF shown by each demographic factor, we chose to evaluate multiple thresholds for pruning the extreme-valued items from each distribution.
 For each demographic factor, we pruned items with difficulty difference from the mean at varying thresholds, from >.25 SD to >3 SD, in increments of .25 SD. 
 At each SD threshold, a potentially different subset of items are excluded for each model, but with the goal of creating a single CDI that is less biased on all dimensions, we pruned the union of the subsets excluded from each model.
@@ -482,8 +495,25 @@ For example, pruning >2SD from the mean of each model excluded 25 sex-biased ite
 Figure 5 shows the size of each demographic effect at different exclusion thresholds.
 
 Ideally, we would find a single threshold that minimized the magnitude of coefficients (and thus bias) for all three demographics simultaneously.
-However, 
-The regression coefficient for sex was closest to 0 when almost all items were trimmed (>.25SD; 661/680 items trimmed).
+Unfortunately, the effect size for each demographic variable was smallest (closest to 0) at different exclusion thresholds. 
+The effect size of sex was smallest when almost all items were trimmed (>0.25 SD; $\beta_{sex} = -.47$; 661/680 total items trimmed; 433 due to sex extremity).
+The effect size of maternal education (SES) was smallest when items >1.25SD in difficulty difference were trimmed ($\beta_{ME} = -.17$; 234 total items trimmed; 126 due to ME extremity). 
+The effect size of race was minimized when items more extreme than 0.5 SD were trimmed ($\beta_{race} = .42$; 577 total items trimmed; 425 due to race extremity).
+
+Where is the exclusion threshold that jointly minimizes the effect sizes of these demographic variables? 
+The strict exclusion of all items with >.25 SD difficulty difference -- 661/680 (97%) of the CDI:WS -- best optimized this, but seems too extreme a culling.
+The next best thresholds are >.5 SD -- again, too extreme -- or 3 SD, a remarkably lax criterion that only excludes 19 items in total (11 due to sex bias).
+Only slightly worse than these is >2.25 SD, which excludes 59 items (9% of the CDI:WS), and shows a modest effect of both race ($\beta=0.48$) and maternal education ($\beta=.19$), and a near-median effect size for sex ($\beta=-.59$).
+We characterize these 59 items below, and consider whether we might recommend pruning them from the CDI:WS.
+
+## Characterizing biased items
+
+Considering just those items whose difficulty was >2.25 SD from the mean difficulty difference on each dimension identified 22 items with extreme sex-based difficulty differences, only 7x of which were easier for females, with the other 18x items favoring males.
+For maternal education, 27 extrema were identified, only 13x of which were easier for low-SES children.
+For race, 21 extrema were identified, only 11x of which were easier for non-white children.
+Thus, while if anything the bulk of the extrema in the sex-based model advantaged the lower language ability group (males), the extrema in the other two models mostly favored the advantaged groups: 26/39x extreme items in the SES model favored high-SES children, and 20/31x items in the race model favored white children.
+17 CDI items were identified as extrema in more than one model: "tractor" and "vroom" were extreme in all three models, "choo choo" was extreme in both SES and sex models, "give me five!" was extreme in both race and sex models, and 13 other items were extreme in both SES and race models ("grrr", "moo", "quack quack", "uh oh", "duck", "owl", "candy", "gum", "walker", "daddy", "pet's name", "up", and "so").
+[Count by lexical class?]
 
 ```{r old-load-pruned, include=F, eval=F}
 # (2sd threshold)
