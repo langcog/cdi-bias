@@ -381,11 +381,14 @@ mm_eth <- get_extreme_item_difficulty_differences(mm_eth, sd_thresh=2.25) # min:
 all_extreme <- rbind(subset(mm_sex, extreme),
                      subset(mm_ses, extreme),
                      subset(mm_eth, extreme)) 
-# length(unique(all_extreme$definition)) 
+# length(unique(all_extreme$definition)) # 59
 # sort(table(all_extreme$definition)) # candy, choo choo, daddy, duck, ... tractor, vroom
 
-# overlap between extreme SES and race items:
-#intersect(subset(mm_ses, extreme)$definition, subset(mm_eth, extreme)$definition)
+# overlaps extreme SES and race items:
+# intersect(subset(mm_ses, extreme)$definition, subset(mm_eth, extreme)$definition)
+# intersect(subset(mm_sex, extreme)$definition, subset(mm_eth, extreme)$definition)
+# intersect(subset(mm_sex, extreme)$definition, subset(mm_ses, extreme)$definition)
+#subset(all_extreme, group1=="Nonwhite")
 ```
 
 
@@ -501,19 +504,26 @@ The effect size of maternal education (SES) was smallest when items >1.25SD in d
 The effect size of race was minimized when items more extreme than 0.5 SD were trimmed ($\beta_{race} = .42$; 577 total items trimmed; 425 due to race extremity).
 
 Where is the exclusion threshold that jointly minimizes the effect sizes of these demographic variables? 
-The strict exclusion of all items with >.25 SD difficulty difference -- 661/680 (97%) of the CDI:WS -- best optimized this, but seems too extreme a culling.
+The strict exclusion of all items with >.25 SD difficulty difference -- 661/680 (97%) of the CDI:WS -- best optimized this, but seems too extreme of a culling.
 The next best thresholds are >.5 SD -- again, too extreme -- or 3 SD, a remarkably lax criterion that only excludes 19 items in total (11 due to sex bias).
 Only slightly worse than these is >2.25 SD, which excludes 59 items (9% of the CDI:WS), and shows a modest effect of both race ($\beta=0.48$) and maternal education ($\beta=.19$), and a near-median effect size for sex ($\beta=-.59$).
-We characterize these 59 items below, and consider whether we might recommend pruning them from the CDI:WS.
+We characterize these 59 potentially biased items below, and consider whether we might recommend pruning them from the CDI:WS.
 
 ## Characterizing biased items
 
-Considering just those items whose difficulty was >2.25 SD from the mean difficulty difference on each dimension identified 22 items with extreme sex-based difficulty differences, only 7x of which were easier for females, with the other 18x items favoring males.
-For maternal education, 27 extrema were identified, only 13x of which were easier for low-SES children.
-For race, 21 extrema were identified, only 11x of which were easier for non-white children.
-Thus, while if anything the bulk of the extrema in the sex-based model advantaged the lower language ability group (males), the extrema in the other two models mostly favored the advantaged groups: 26/39x extreme items in the SES model favored high-SES children, and 20/31x items in the race model favored white children.
-17 CDI items were identified as extrema in more than one model: "tractor" and "vroom" were extreme in all three models, "choo choo" was extreme in both SES and sex models, "give me five!" was extreme in both race and sex models, and 13 other items were extreme in both SES and race models ("grrr", "moo", "quack quack", "uh oh", "duck", "owl", "candy", "gum", "walker", "daddy", "pet's name", "up", and "so").
-[Count by lexical class?]
+Figure 4 shows the 59 items showing extreme bias (i.e., whose difficulty was >2.25 SD from the mean difficulty difference on one or more demographic dimension).
+There were 22 items with extreme sex-based difficulty differences, only 7 of which were more known by females, with the other 15 items favoring males.
+All but one of the sex-biased items are nouns, many of which are stereotypically associated with one gender more than the other, including stereotypically-male professions (e.g., "fireman").
+For maternal education, 27 extrema were identified, only 10 of which were biased for low-SES children.
+As for sex, most of the ME-biased items are nouns (15/27). 
+Notably, many of the items more known by high-ME children were animals ("zebra", "owl") and animal sounds ("baa baa", "moo").
+Items more known by low-ME children include a few sweet treats: "candy", "soda/pop", and "gum".
+For race, 21 extrema were identified, only 8 of which were easier for non-white children.
+The lexical class of the race-biased items was more varied: 10 were nouns, but many others were early-learned words and phrases (e.g., "up", "all gone", "uh-oh", "bye", "mommy").
+Only 10 of the 59 items were extreme in more than one model, with most of the overlap being between race and ME (8 items).
+Only 1 item ("vroom") was extreme for all three demographics.
+
+
 
 ```{r old-load-pruned, include=F, eval=F}
 # (2sd threshold)
@@ -534,11 +544,6 @@ sex_reg_pr <- summary(lm(ability_pr ~ age_sc * sex, data=d_demo))$coefficients #
 # if due to environmental 
 ```
 
-<!-- OLD
-We identified 76 CDI items that function quite differently across demographic groups, and chose to prune just the 15 items with large difficulty differences for both SES and race. 
-After pruning just these 15 items from the CDI:WS and re-fitting a Rasch IRT model, regressions predicting ability with each demographic variable (and age, centered) showed reduced main effects of SES ($\beta=0.20$ vs. $\beta=0.23$) and race ($\beta=0.48$ vs. $\beta=0.50$).
-Although these are small reductions in the SES and race effect sizes, we find them striking as we pruned only 2.2% of the CDI:WS items (and only 20% of the 76 extrema we identified), and did not specifically prune items that were biased against the disadvantaged groups (non-white, low-SES).
--->
 
 
 ```{r demo-ability, include=F, out.width="\\linewidth", fig.env = "figure", fig.pos = "h", fig.align='center', fig.width=3.5, fig.height=7.5, set.cap.width=T, num.cols.cap=1, fig.cap = "Scatterplots showing item difficulty per demographic group along each dimension."}
@@ -568,21 +573,28 @@ p3 <- mm_eth %>%
 ggarrange(p1, p2, p3, ncol=1)
 ```
 
+```{r biased-words, include=T, out.width="\\linewidth", fig.env = "figure", fig.pos = "H", fig.align='center', fig.width=3.5, fig.height=3.2, set.cap.width=T, num.cols.cap=1, fig.cap = "The 59 items showing extreme bias (difficulty difference $>2.25$ SD) for one or more demographic."}
+knitr::include_graphics("figs/extrema2p25sd.pdf")
+```
 
 ## Relating child-directed speech to demographic bias
 
 Demographic differences in language ability are likely to be at least partially explained by differences in linguistic input received by children in different groups.
-Indeed, input quantity (total daily tokens) and some measures of quality (e.g., lexical diversity: ratio of word types vs. tokens) have been predictive of language learning outcomes in some demographic studies [@rowe2009differences; @huttenlocher1991early].
-Here, we investigated the extent to which word frequency in child-directed speech to male vs. female children was predictive of the amount of DIF shown by CDI items. 
+Indeed, input quantity (total daily tokens) and some measures of quality (e.g., lexical diversity: ratio of word types vs. tokens) have often been predictive of language learning outcomes in  demographic studies [@rowe2009differences; @huttenlocher1991early].
+We used a corpus-based analysis to investigate the extent to which word frequency in child-directed speech to male vs. female children was predictive of the amount of sex-based bias shown by CDI items. 
 Similar to the approach taken by @braginsky2016gender, we used the CHILDES corpus of transcripts from dyadic play sessions [@macwhinney2000childes], which are labeled with the sex of the target child, but not other demographic variables.
-(Number of males, number of females, total word counts, a couple examples...)
-
-Overall, the correlation between the proportion of times a word was spoken to a female child and the size of the female (vs. male) advantage for that CDI word was modest, but significant ($r=0.19$, $p<.001$).
+We found a total of 5213750 female-directed tokens and 6091950 male-directed tokens that matched 662 of the 680 CDI:WS items, normalized the word frequencies to tokens per million for each target sex, and calculated the log-odds of each word being spoken to a female (i.e., $log(p_{f} / p_{m}$), meaning unbiased words will have log-odds of 0, while those spoken more often to females will have log-odds $>0$, and those spoken more often males will have log-odds $<0$.
+For example "doll" was spoken 156 times to females, and 138 times to males, thus $p_{f} = 156/(156+138) = .53$, $p_{m} = 1-p_{f} = 0.47$, and $log(p_{f}/p_{m})$ = 0.12), while "police" was spoken 138 times to females, and 225 times to males, and thus has log-odds = -0.49).
+Overall, the correlation between the log-odds of a word being spoken to a female vs. a male child and the size of the female (vs. male) advantage for that CDI word was modest, but significant ($r=0.18$, $p<.001$), suggesting that some of the sex bias seen in CDI items is explained by differences in language input received by girls vs. boys.
 
 ```{r, include=F, out.width="\\linewidth", fig.env = "figure", fig.pos = "h", fig.align='center', fig.width=3.5, fig.height=3.5, set.cap.width=T, num.cols.cap=1, fig.cap = "CHILDES frequency of input to male vs. female children."}
 type_freqs = readRDS("../data/type_freqs.rds")
 type_counts = readRDS("../data/type_counts.rds")
 type_counts_smoothed = readRDS("../data/type_counts_smoothed.rds")
+
+# total tokens:
+type_counts %>% group_by(target_child_sex) %>% 
+  summarise(total = sum(count))
 
 type_counts_smoothed <- type_counts_smoothed %>%
   pivot_wider(id_cols=uni_lemma, names_from=sex, values_from=count_per_mil) %>%
@@ -603,40 +615,46 @@ tmp %>% #filter(extreme==T) %>%
 
 #subset(tmp, extreme==T & propFemale > .47 & propFemale < .53) # hose & dump
 
-#cor.test(tmp$propFemale, tmp$d_diff) # .19, p<.001
-
+# subset(type_counts_smoothed, uni_lemma=="police")
+#cor.test(log(tmp$FtoM), tmp$d_diff) # .18
+#subset(type_counts_smoothed, uni_lemma=="police")
 ```
 
 
 # Discussion
 
-We investigated the CDI:WS, a popular parent-report measure of children's early vocabulary, for potential demographic bias, examining the distribution of words' estimated difficulties for high- vs. low-SES children, females vs. males, and for white vs. non-white children.
+We investigated the CDI:WS, a popular parent-report measure of children's early vocabulary, for potential demographic bias, examining the distribution of words' estimated difficulties for children of mothers with high- vs. low-education children (a proxy for family SES), females vs. males, and for white vs. non-white children.
 The IRT-based analysis revealed differential item functioning (DIF) for many items along each demographic dimension, but only in the case of sex were clear clusters of items that were more well-known to females (including feminine clothing and genitalia), and a clear item that was more well-known to males (male genitalia). 
 For the rest of the items, and for SES- and race-based analysis, there was a smooth continuum of DIF, making the boundary of true DIF subjective, as this would rely on knowing the true difference in language ability between groups--which we reciprocally estimate from instruments like the CDI.
-To move forward, we identified candidate DIF items by looking at the extremes of each distribution, and found that for SES and race, the majority of these extrema (66% in both cases) were easier for the majority demographic group (i.e., high-SES, white), meaning that if these items were removed, SES and race effects on language ability as measured by the CDI:WS would decrease.
-In contrast, the majority of the extrema in the sex-based DIF analysis were easier for the disadvantaged group (males): if these extrema are removed, the female language advantage on the CDI:WS will likely increase.
-To confirm these implications, we pruned a very small number of CDI items (15 of 680) that were DIF extrema in both SES- and race-based analyses, and found that the effect of these dimensions on language ability was reduced.
+To move forward, we identified candidate DIF items systematically pruning the extremes of each distribution, excluding outliers for each demographic across a range of thresholds, and seeking to minimize the size of demographic effects.
+Although many exclusion thresholds decreased the size of maternal education and race effects, the female advantage actually grew under most prunings, with the majority of excluded extrema being stereotypically-male nouns (e.g, "truck", "fireman").
 
-## The difficulty of DIF
+This analysis highlights a fundamental difficulty of identifying DIF: an analyst must either know the expected magnitude of an ability difference between the two demographic groups, or know a set of "anchor" items that are equally difficult (i.e., unbiased) for both groups [for an overview, see @stenhaug2021treading].
+But in the universe of children's early language, there is only a finite set of early-learned words to choose from--and we may expect many of them to be biased for various environmental reasons (e.g., boys and girls know their respective genitalia; children in Florida may not use mittens or skis).
+Hence, the presence of DIF on a set of items could indicate a degree of varying linguistic input, rather than an actual advantage for one demographic over another.
 
-However, DIF is fundamentally difficult to identify for multiple reasons [for an overview, see @stenhaug2021treading].
-First, most techniques to identify DIF rely on defining a set of "anchor" test items that are assumed to be equally difficult (i.e., unbiased) for both groups of interest.
-Identifying anchor items is at best fraught when there may in fact be a difference in ability between groups (e.g., the female language advantage), and is further confounded when the magnitude of this ability difference is unknown.
-A reason that DIF is particularly tricky in measuring children's early language ability is that there is a finite universe of early-learned words to choose from--and we may expect many of them to be biased for various environmental reasons (e.g., children in Florida may not use mittens or skis).
-Hence, the presence of DIF on a wide variety of items may not indicate the presence of bias; it could indicate that one demographic has a higher average ability level than the other.
-For example, let male language ability be drawn from a standard normal $\mu_{male} ~ N(0,1)$, with female language ability slightly higher, on average ($\mu_{female} = \mu_{male} + 0.1$).
-Then we would expect items to be an average of $0.1$ easier for females than for males, and we might identify items that are instead easier for males than females as showing undesirable DIF.
-And yet, without knowing the actual ability difference between two demographic groups--for which we also rely upon our tests, it is difficult to adjudicate which items show DIF, and which do not.
-
-
+Choosing an exclusion threshold that struck a balance of reducing race- and ME-based bias and not eliminating too many items, we identified 59 suspect items--the majority of which favored white/high-ME groups.
+These extrema were predominantly nouns, including many animals (esp. for maternal education), vehicles and professions (esp. for sex). 
+Notably, no verbs and few syntactically complex items were identified as outliers, which may suggest that these lexical classes are less prone to environmental influence, and perhaps more generally unbiased. <!--or something..seems important, as nouns are more referential/context-dependent-->
+Pruning these 59 outliers would decrease the demographic effects of maternal education (unpruned $\beta=.23$; pruned $\beta=.19$) and race (unpruned $\beta=.50$; pruned $\beta=.48$).
+In contrast, the majority of the sex-biased outliers were easier for the disadvantaged group (males), meaning that the removal of these extrema increased the female language advantage on the CDI:WS (unpruned $\beta=0.56$; pruned $\beta=.59$).
+In aggregate, these analyses seem to suggest that the CDI:WS may slightly overestimate the magnitude of differences in language ability along the dimensions of maternal education and race, and perhaps underestimate the female advantage.
 
 This investigation is only a first step in measuring demographic bias in the items on the CDI:WS.
-In aggregate, it seems to suggest that we may be slightly overestimating the magnitude of differences in language ability along the dimensions of SES and race, and perhaps underestimating the female advantage.
-However, the best way to estimate endogenous differences in ability (rather than exogenous differences, e.g. in the language environment) would be to conduct controlled, in-lab experiments measuring children's ability to learn novel words.
-Future research may also look into the specific items that are easier for one group than another, and determine whether these differences can be accounted for by different environmental contexts. 
-For example, it is striking that many of the extrema favoring high-SES children are animals and animal sounds (e.g., "grrr", "quack quack", "woof woof", "baa baa", "duck", "sheep", "giraffe", "zebra"): do high-SES households visit the zoo more, or do they often engage in other activities related to naming animals and noises they make?
-If certain high-SES activities are driving early word learning for these children, what are the activities (and associated vocabulary) that low-SES households are instead engaging in?
-A truly fair test of children's early vocabulary would contain a representative sample of words from all activities that children engage in, across demographic groups.
+More research is needed to determine which CDI items that show DIF are more subject to environmental influence, as we found only a modest association between the relative frequency of words in child-directed speech to boys vs. girls and the amount of sex-based DIF.
+Examining the relative frequency of CDI words across households with varying maternal education and race may reveal similarly weak associations, or there may be strong associations only among particular categories of words.
+It may be that particular activity contexts--popular with some demographic groups, and not others--may be predictive. 
+For example, many of the extrema favoring high-ME children are animals and animal sounds (e.g., "quack quack", "woof woof", "baa baa", "duck", "sheep", "giraffe", "zebra"): do high-SES households visit the zoo more often, or perhaps engage in other activities related to naming animals and noises they make (e.g., animal noise toys)?
+If certain activities are driving early word learning for high-ME children, what are the activities (and associated vocabulary) that low-SES households are instead engaging in?
+Note, too, that SES, race, and sex are only three of many possible demographic dimensions of interest. For example, geographic region is likely predictive of children's early experience with (and thus knowledge of) CDI items related to winter weather (e.g., "snow", "mittens") or outdoors activities (e.g. "camping").
+A truly fair test of children's early vocabulary would contain a representative and balanced sample of words from all activities that children engage in, across demographic groups.
+
+<!--However, the best way to estimate endogenous differences in ability (rather than exogenous differences, e.g. in the language environment) would be to conduct controlled, in-lab experiments measuring children's ability to learn novel words.-->
+
+<!-- For example, let male language ability be drawn from a standard normal $\mu_{male} ~ N(0,1)$, with female language ability slightly higher, on average ($\mu_{female} = \mu_{male} + 0.1$).
+Then we would expect items to be an average of $0.1$ easier for females than for males, and we might identify items that are instead easier for males than females as showing undesirable DIF.
+And yet, without knowing the actual ability difference between two demographic groups--for which we also rely upon our tests, it is difficult to adjudicate which items show DIF, and which do not.
+-->
 
 # Acknowledgements
 
