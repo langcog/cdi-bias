@@ -17,7 +17,7 @@ abstract: >
     measures of children's aggregate early language skill. However, CDIs contain
     hundreds of vocabulary items, some of which may not be heard (and thus learned) equally
     often by children of varying backgrounds. This study used a database of American English 
-    CDIs to identify words that showed strong bias for particular demographic groups of children, on 
+    CDIs to identify words demonstrating strong bias for particular demographic groups of children, on 
     dimensions of sex (male vs. female), race (white vs. non-white), and maternal education 
     (high vs. low). For each dimension, we identified dozens of strongly biased items, and showed that 
     eliminating these items reduced the expected ability difference between groups. Additionally,
@@ -25,7 +25,7 @@ abstract: >
     sex-based word learning bias, and discuss possible sources of demographic bias in early word learning.
     
 keywords: >
-    language acquisition; word learning; measuring instrument bias; demographics;
+    language acquisition; word learning; measuring instrument bias; demographic bias
     
 output: cogsci2016::cogsci_paper
 #final-submission: \cogscifinalcopy
@@ -90,8 +90,8 @@ For example, asking whether a 22-month-old produces the word "ball" is far less 
 While many languages show similar demographic effects on early word learning [e.g., the female advantage: @eriksson2012differences; and the first-born advantage: @frank2021], the size of these demographic effects vary across languages [see @frank2021, Ch. 6]. 
 Why might we see such variation?
 While it is possible that there is an underlying difference in mean language ability between demographic groups, and that cross-linguistic variation is driven by differences in the language environments of different cultures, could it also be possible that the tests are biased to some degree--and perhaps to a different degree in different languages?
-The idea that some items on a test may show bias, favoring one group over another, is known in psychometrics as Differential Item Function (DIF; @holland1993differential]. 
-The validity of any test with many items favoring one group over another (say, children from rural vs. urban households) is questionable, as the test may be overestimating the ability of test-takers in the former (rural) group, and/or underestimating the ability of the latter group -- and not because of any underlying mean difference in ability between the groups, but simply because the test is unfair [@camilli2013ongoing].
+The idea that some items on a test may show bias, favoring one group over another, is known in psychometrics as Differential Item Function [DIF; @holland1993differential]. 
+The validity of any test with many items favoring one group over another (say, children from rural vs. urban households) is questionable, as the test may be overestimating the ability of test-takers in the former (rural) group, and/or underestimating the ability of the latter group -- not because of any underlying mean difference in ability between the groups, but simply because the test is unfair [@camilli2013ongoing].
 For example, if a vocabulary test is composed almost entirely of the names of farm equipment, the test will underestimate the knowledge of urban children, who have experience of other contexts, despite being less familiar with farm equipment than their rural peers.
 Of course, there may in fact be some meaningful ability difference between demographic groups, as is likely the case for the female language advntage, which has been documented in many languages [@eriksson2012differences; @frank2021].
 However, these demographic differences in early language learning have not been investigated as potentially due to DIF.
@@ -138,14 +138,14 @@ momed_tab <- table(d_demo$mom_ed)
 ```
 
 
-We analyze parent-reported Wordbank data from `r nrow(d_demo)` American English CDI: Words & Sentences administrations for children `r min(d_demo$age)` to `r max(d_demo$age)` months of age [@frank2017; @frank2021].
+We analyzed parent-reported Wordbank data from `r nrow(d_demo)` American English CDI: Words & Sentences administrations for children `r min(d_demo$age)` to `r max(d_demo$age)` months of age [@frank2017; @frank2021].
 Full demographic data are not reported in some datasets contributed to Wordbank: sex was available for `r nrow(d_demo)-sum(is.na(d_demo$sex))` children, race/ethnicity was available for `r nrow(d_demo)-sum(is.na(d_demo$ethnicity))` children, and maternal education (a proxy for socioeconomic status; SES) was available for `r nrow(d_demo)-sum(is.na(d_demo$ses_group))` children.
 
 The analysis of sex-based differences included CDI administrations from `r sex_tab["Female"]` female and `r sex_tab["Male"]` male children.
 The analysis of race-based differences included data from `r eth_tab["White"]` white, `r eth_tab["Asian"]` Asian, `r eth_tab["Black"]` Black, `r eth_tab["Hispanic"]` Hispanic, and `r eth_tab["Other"]` "Other" children. 
-Due to sparse data for many categories, we binarized participants' race/ethnicity as White (`r eth2_tab["White"]`) or Non-white (`r eth2_tab["Nonwhite"]`), recognizing that there may be important variation between groups that this will fail to capture. 
-Data for the maternal education analysis included CDI data from children whose mother's had the following levels of education: `r momed_tab["Primary"]` with no more than primary school education, `r momed_tab["Some Secondary"]` with some secondary school, `r momed_tab["Secondary"]` with no more than secondary school, `r momed_tab["Some College"]` with some college, `r momed_tab["College"]` with no more than a college degree, `r momed_tab["Some Graduate"]` with no more than some graduate school, and `r momed_tab["Graduate"]` with a graduate degree.
-Again due to data sparsity, we binarized the `r ses_tab["high"]` children whose mothers had at least some college or more as high maternal education (high-ME), and those whose mothers had at most high school (`r ses_tab["low"]` children) as low maternal education (low-ME). 
+Due to sparse data for many categories, we dichotomized participants' race/ethnicity as White (`r eth2_tab["White"]`) or Non-white (`r eth2_tab["Nonwhite"]`), recognizing that there may be important variation between groups that this will fail to capture. 
+Data for the maternal education analysis included CDI data from children whose mothers' had the following levels of education: `r momed_tab["Primary"]` with no more than primary school education, `r momed_tab["Some Secondary"]` with some secondary school, `r momed_tab["Secondary"]` with no more than secondary school, `r momed_tab["Some College"]` with some college, `r momed_tab["College"]` with no more than a college degree, `r momed_tab["Some Graduate"]` with no more than some graduate school, and `r momed_tab["Graduate"]` with a graduate degree.
+Due to data sparsity, we again dichotomized the `r ses_tab["high"]` children whose mothers had at least some college or more as high maternal education (high-ME), and those whose mothers had at most high school (`r ses_tab["low"]` children) as low maternal education (low-ME). 
 
 
 ## Rasch Model
@@ -168,9 +168,9 @@ If there is no DIF for a given item, then $d_i \approx 0$ as the two groups find
 
 # Results
 
-First, we will examine the size of demographic effects on language ability in a baseline Rasch model fitted without regard to demographic group.
-Then we will fit a multigroup Rasch model for each demographic factor, and characterize the between-group differences in item difficulties.
-Next, we will re-examine the size of demographic effects after pruning biased items from the CDI:WS using a varying threshold.
+First, we examine the size of demographic effects on language ability in a baseline Rasch model fitted without regard to demographic group.
+Then we fit a multigroup Rasch model for each demographic factor, and characterize the between-group differences in item difficulties.
+Next, we re-examine the size of demographic effects after pruning biased items from the CDI:WS using different criteria, and recommend a threshold.
 Finally, we measure the strength of association between sex-related differences in language input and the degree of sex-related DIF.
 
 ```{r load-data}
