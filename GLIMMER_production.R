@@ -262,9 +262,28 @@ AOAA_OAT <- function(d_mat, group, fname=c()) {
   return(list(model=constrained, items_removed=items_removed, dif_stats=difm))
 }
 
-ses_aoaa <- AOAA_OAT(d_mat, ses_group, "ses")
-sex_aoaa <- AOAA_OAT(d_mat, sex_group, "sex")
-race_aoaa <- AOAA_OAT(d_mat, eth_group, "race")
+ses_aoaa <- AOAA_OAT(d_mat, ses_group, "ses") # removed 314 items
+sex_aoaa <- AOAA_OAT(d_mat, sex_group, "sex") # removed 170 items
+race_aoaa <- AOAA_OAT(d_mat, eth_group, "race") # removed 318 items
+
+intersect(ses_aoaa$items_removed$word, sex_aoaa$items_removed$word) # 90
+
+require(VennDiagram)
+library(RColorBrewer)
+
+venn.diagram(
+  x = list(ses_aoaa$items_removed$word, 
+           sex_aoaa$items_removed$word, 
+           race_aoaa$items_removed$word),
+  fill=brewer.pal(3, "Pastel2"),
+  category.names = c("Maternal Ed" , "Sex" , "Race"),
+  cat.cex = 1.1,
+  cat.fontface = "bold",
+  cex = 1.2,
+  fontface = "bold",
+  filename = 'AOAA-OAT_venn_diagram.png',
+  output=TRUE
+)
 
 # drop uses a constrained model (e.g. same group means) and then tests whether dropping
 #dif_itemN = DIF(mod_intuitive_sex, which.par=c('d'), scheme='drop', items2test=1:2)
