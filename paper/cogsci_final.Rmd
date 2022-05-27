@@ -666,7 +666,7 @@ And yet, without knowing the actual ability difference between two demographic g
 
 # Acknowledgements
 
-We thank members of the Language and Cognition lab and three anonymous reviewers for their feedback.
+This research was supported by the Stanford Maternal and Child Health Research Institute. We thank members of the Language and Cognition lab and three anonymous reviewers for their feedback. 
 
 # References 
 
