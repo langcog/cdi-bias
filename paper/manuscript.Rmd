@@ -52,7 +52,7 @@ wordcount         : "4008"
 
 bibliography      : "library.bib"
 
-floatsintext      : no
+floatsintext      : yes
 linenumbers       : yes
 draft             : no
 mask              : no
@@ -114,7 +114,7 @@ CDIs have shown good predictive validity [e.g., @fenson1994; @bornstein2012stabi
 Our primary focus is the vocabulary checklist portion of the CDI Words & Sentences (CDI:WS) form, comprised of 680 early-learned words across 22 categories (e.g., animals, vehicles, action words, pronouns) selected to assess the productive vocabulary of children 16 to 30 months of age.[^1]
 For each item on the CDI:WS, caregivers are asked to respond whether the target child has been heard to say (i.e. produce) the given item.
 Children's total vocabulary score on the CDI:WS is tightly correlated with other facets of early language (e.g., grammatical competence and gesture), suggesting that the language system is "tightly woven" [@frank2021].
-Due to these desirable properties, CDIs have been adapted to dozens of languages, and a central repository of CDI data contributed from all over the world has been created [Wordbank; @frank2017; @frank2021].
+Due to these desirable properties, CDIs have been adapted to dozens of languages, and a central repository of CDI data contributed from all over the world has been created (Wordbank) [@frank2017; @frank2021].
 
 [^1]: The CDI: Words and Gestures form includes a subset of the CDI:WS items and targets children 12 to 18 months of age, measuring both comprehension and production.
 
@@ -256,7 +256,8 @@ sex_reg <- summary(lm(ability ~ age_sc * sex, data=d_demo))$coefficients # R^2=.
 ```
 
 
-```{r baseline-ability-vs-age-hor, fig.env = "figure*", out.width="\\linewidth", fig.pos = "t", fig.align='center', fig.width=6.5, fig.height=3, set.cap.width=T, num.cols.cap=2, fig.cap = "Language ability vs. age by demographic group, from the baseline Rasch model."}
+```{r baseline-ability-vs-age-hor, warning=F, out.width="\\linewidth", fig.align='center', fig.width=6.5, fig.height=3, fig.cap = "Language ability vs. age by demographic group, from the baseline Rasch model."}
+# fig.env = "figure*", fig.pos = "t", set.cap.width=T, num.cols.cap=2,
 p1 <- d_demo %>% filter(!is.na(sex)) %>%
   ggplot(aes(x=jitter(age), y=ability, color=sex)) + 
   geom_point(alpha=.1) + geom_smooth() + theme_classic(base_size=10) + 
@@ -315,7 +316,7 @@ For the maternal education and race GLIMMERs -- and in the rest of the full sex 
 This pattern makes identifying items with DIF quite difficult, as different methods are likely to yield inconsistent results [@stenhaug2021treading].
 Hence, we next characterized the distributions of the item-level group difficulty differences, and measured the influence of pruning a varying number of items on the demographic effect sizes.
 
-```{r glimmer-combo, fig.env = "figure*", out.width="\\linewidth", fig.pos = "h", fig.width=6.5, fig.align = "center", set.cap.width=T, num.cols.cap=2, fig.cap = "GLIMMER plots of a sample of CDI:WS words from the sex bias model (left), the maternal education model (center), and the race model (right). Words at the top are more well-known by one group (e.g., females, for sex), while those at the bottom are more known by the other group (e.g., males), and the selection in the middle show roughly the median difficulty difference for those groups."}
+```{r glimmer-combo, out.width="\\linewidth", fig.width=6.5, fig.align = "center", fig.cap = "GLIMMER plots of a sample of CDI:WS words from the sex bias model (left), the maternal education model (center), and the race model (right). Words at the top are more well-known by one group (e.g., females, for sex), while those at the bottom are more known by the other group (e.g., males), and the selection in the middle show roughly the median difficulty difference for those groups."}
 knitr::include_graphics("figs/smGLIMMER_combo.pdf")
 ```
 
@@ -435,7 +436,7 @@ all_extreme <- rbind(subset(mm_sex, extreme),
 ```
 
 
-```{r pruned-coefs-hor, fig.env = "figure*", out.width="\\linewidth", fig.pos = "h", fig.align='center', fig.width=6.5, fig.height=2.8, set.cap.width=T, num.cols.cap=2, fig.cap = "Size of demographic effects (regression coefficients) with different pruning thresholds."}
+```{r pruned-coefs-hor, out.width="\\linewidth", fig.width=6.5, fig.height=3, fig.cap = "Size of demographic effects (regression coefficients) with different pruning thresholds."}
 load(here("data/pruned_demo_coefs.Rdata"))
 # horizontal version
 pdat <- prune_dat %>% rename(c(beta_sex=sex_beta, beta_ses=ses_beta, beta_eth=eth_beta)) %>%
@@ -615,7 +616,7 @@ p3 <- mm_eth %>%
 ggarrange(p1, p2, p3, ncol=1)
 ```
 
-```{r biased-words, include=T, out.width="\\linewidth", fig.env = "figure", fig.pos = "h", fig.align='center', fig.width=3.5, fig.height=3.2, set.cap.width=T, num.cols.cap=1, fig.cap = "The 59 items showing extreme bias (difficulty difference $>2.25$ SD) for one or more demographic. The 19 items in bold are those showing a difference $>3$ SD."}
+```{r biased-words, include=T, out.width=".7\\linewidth", fig.align='center', fig.width=3.5, fig.cap = "The 59 items showing extreme bias (difficulty difference $>2.25$ SD) for one or more demographic. The 19 items in bold are those showing a difference $>3$ SD."}
 knitr::include_graphics("figs/extrema2p25sd_3sd_bold.pdf")
 ```
 
