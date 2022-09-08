@@ -19,17 +19,15 @@ author:
       - "Writing - Review & Editing"
   - name          : "Michael C. Frank"
     affiliation   : "1"
-    role:
-      - "Conceptualization"
-      - "Writing - Original Draft Preparation"
-      - "Writing - Review & Editing"
-      - "Supervision"
+#    role:
+#      - "Conceptualization"
+#      - "Writing - Original Draft Preparation"
+#      - "Writing - Review & Editing"
+#      - "Supervision"
 
 affiliation:
   - id            : "1"
     institution   : "Stanford University"
-#  - id            : "2"
-#    institution   : "Konstanz Business School"
 
 authornote: |
   Department of Psychology
@@ -111,7 +109,7 @@ Other factors are also predictive of language skill: first-born children tend to
 One challenge in comprehensive assessment of these differences is that it is difficult to get a complete measure of young children's language skill. Long recordings are prohibitively difficult to collect and transcribe, and yet any short recording (e.g., a 1-hour play session) will elicit only a small proportion of the words and constructions that children know. 
 Thus, researchers of early word learning have constructed tests with hundreds of words, intentionally oversampling words that are more likely to be known by young children.
 
-We focus here on the MacArthur-Bates Communicative Development Inventories [CDIs; @fenson1994; @Fenson2007], a set of parent-reported measures of children's productive and receptive language skills, which offer a low-cost and reliable way to estimate children's early language skills [@fenson1994].
+We focus here on the MacArthur-Bates Communicative Development Inventories (CDIs) [@fenson1994; @Fenson2007], a set of parent-reported measures of children's productive and receptive language skills, which offer a low-cost and reliable way to estimate children's early language skills [@fenson1994].
 CDIs have shown good predictive validity [e.g., @fenson1994; @bornstein2012stability; @duff2015infant].
 Our primary focus is the vocabulary checklist portion of the CDI Words & Sentences (CDI:WS) form, comprised of 680 early-learned words across 22 categories (e.g., animals, vehicles, action words, pronouns) selected to assess the productive vocabulary of children 16 to 30 months of age.[^1]
 For each item on the CDI:WS, caregivers are asked to respond whether the target child has been heard to say (i.e. produce) the given item.
@@ -258,24 +256,24 @@ sex_reg <- summary(lm(ability ~ age_sc * sex, data=d_demo))$coefficients # R^2=.
 ```
 
 
-```{r baseline-ability-vs-age-hor, fig.env = "figure*", out.width="\\linewidth", fig.pos = "t", fig.align='center', fig.width=6.5, fig.height=2.8, set.cap.width=T, num.cols.cap=2, fig.cap = "Language ability vs. age by demographic group, from the baseline Rasch model."}
+```{r baseline-ability-vs-age-hor, fig.env = "figure*", out.width="\\linewidth", fig.pos = "t", fig.align='center', fig.width=6.5, fig.height=3, set.cap.width=T, num.cols.cap=2, fig.cap = "Language ability vs. age by demographic group, from the baseline Rasch model."}
 p1 <- d_demo %>% filter(!is.na(sex)) %>%
   ggplot(aes(x=jitter(age), y=ability, color=sex)) + 
-  geom_point(alpha=.1) + geom_smooth() + theme_classic(base_size=9) + 
+  geom_point(alpha=.1) + geom_smooth() + theme_classic(base_size=10) + 
   xlab("Age (months)") + ylab("Language Ability") + 
   scale_color_discrete(type=sex_colors) +
   theme(legend.position = "top")
 
 p2 <- d_demo %>% filter(!is.na(ses_group)) %>%
   ggplot(aes(x=jitter(age), y=ability, color=ses_group)) + 
-  geom_point(alpha=.1) + geom_smooth() + theme_classic(base_size=9) + 
+  geom_point(alpha=.1) + geom_smooth() + theme_classic(base_size=10) + 
   xlab("Age (months)") + ylab("Language Ability") +
   scale_color_discrete(name = "Maternal Ed.", type=ses_colors) + 
   theme(legend.position = "top")
 
 p3 <- d_demo %>% filter(!is.na(eth_group)) %>%
   ggplot(aes(x=jitter(age), y=ability, color=eth_group)) + 
-  geom_point(alpha=.1) + geom_smooth() + theme_classic(base_size=9) + 
+  geom_point(alpha=.1) + geom_smooth() + theme_classic(base_size=10) + 
   xlab("Age (months)") + ylab("Language Ability") + 
   scale_color_discrete(name = "Race", type=eth_colors) + 
   theme(legend.position = "top")
@@ -481,16 +479,6 @@ With the mean and median difficulty differences close to 0, and roughly half of 
 For race, the median difficulty difference (nonwhite-white) was `r round(median(mm_eth$d_diff),2)` (M=`r round(mean(mm_eth$d_diff),2)`, sd=`r round(sd(mm_eth$d_diff),2)`), with `r length(which(mm_eth$d_diff>0))`/680 items being easier for white than non-white children, revealing a fairly pervasive advantage for white children on CDI items. 
 
 
-<!--
-## Recommended Pruning Threshold: 2SD
-Considering just those items whose difficulty was >2SD from the mean difficulty difference identified 25 items with extreme sex-based difficulty differences, only 7 of which were easier for females, with the other 18 items favoring males.
-For SES, 39 extrema were identified, only 13 of which were easier for low-SES children.
-For race, 31 extrema were identified, only 11 of which were easier for non-white children.
-Thus, while if anything the bulk of the extrema in the sex-based model advantaged the lower language ability group (males), the extrema in the other two models mostly favored the advantaged groups: 26/39 extreme items in the SES model favored high-SES children, and 20/31 items in the race model favored white children.
-17 CDI items were identified as extrema in more than one model: "tractor" and "vroom" were extreme in all three models, "choo choo" was extreme in both SES and sex models, "give me five!" was extreme in both race and sex models, and 13 other items were extreme in both SES and race models ("grrr", "moo", "quack quack", "uh oh", "duck", "owl", "candy", "gum", "walker", "daddy", "pet's name", "up", and "so").
-In our final analysis, we explore the effect of pruning the 15 items that were extreme in both SES and race models.
--->
-
 ```{r items-to-remove}
 prune_defs <- c("tractor", "vroom", "grrr", "moo", "quack quack", "uh oh", "duck", "owl", "candy", "gum", "walker", "daddy*", "pet's name", "up", "so") # also "choo choo" and "give me five!" ?
 prune_cols <- which(!is.element(names(d_mat), prune_defs))
@@ -553,6 +541,17 @@ The strict exclusion of all items with >.25 SD difficulty difference -- 661/680 
 The next best thresholds are >.5 SD -- again, too extreme -- or 3 SD, a remarkably lax criterion that only excludes 19 items in total (11 due to sex bias).
 Only slightly worse than these is >2.25 SD, which excludes 59 items (9%), and shows a modest effect of both race ($\beta=0.48$) and maternal education ($\beta=.19$), and a near-median effect size for sex ($\beta=-.59$).
 We characterize these 59 potentially biased items below, and consider whether we might recommend pruning them from the CDI:WS.
+
+
+<!--
+## Recommended Pruning Threshold: 2SD
+Considering just those items whose difficulty was >2SD from the mean difficulty difference identified 25 items with extreme sex-based difficulty differences, only 7 of which were easier for females, with the other 18 items favoring males.
+For SES, 39 extrema were identified, only 13 of which were easier for low-SES children.
+For race, 31 extrema were identified, only 11 of which were easier for non-white children.
+Thus, while if anything the bulk of the extrema in the sex-based model advantaged the lower language ability group (males), the extrema in the other two models mostly favored the advantaged groups: 26/39 extreme items in the SES model favored high-SES children, and 20/31 items in the race model favored white children.
+17 CDI items were identified as extrema in more than one model: "tractor" and "vroom" were extreme in all three models, "choo choo" was extreme in both SES and sex models, "give me five!" was extreme in both race and sex models, and 13 other items were extreme in both SES and race models ("grrr", "moo", "quack quack", "uh oh", "duck", "owl", "candy", "gum", "walker", "daddy", "pet's name", "up", and "so").
+In our final analysis, we explore the effect of pruning the 15 items that were extreme in both SES and race models.
+-->
 
 ## Characterizing biased items
 
@@ -690,7 +689,7 @@ Examining the relative frequency of CDI words across households with varying mat
 It may be that particular activity contexts--popular with some demographic groups, and not others--may be predictive. 
 For example, many of the extrema favoring high-ME children are animals and animal sounds (e.g., "quack quack", "woof woof", "baa baa", "duck", "sheep", "giraffe", "zebra"): do high-SES households visit the zoo more often, or perhaps engage in other activities related to naming animals and noises they make (e.g., animal noise toys)?
 If certain activities are driving early word learning for high-ME children, what are the activities (and associated vocabulary) that low-SES households are instead engaging in?
-Critically this enterprise will require a greater diversity of publicly-available corpora of child language; we view the lack of such data as a substantial issue.
+Critically, this enterprise will require a greater diversity of publicly-available corpora of child language; we view the lack of such data as a substantial issue.
 
 SES, race, and sex are only three of many possible demographic dimensions of interest. For example, geographic region is likely predictive of children's early experience with (and thus knowledge of) CDI items related to winter weather (e.g., "snow", "mittens") or outdoors activities (e.g. "camping").
 A truly fair test of children's early vocabulary would contain a representative and balanced sample of words from all activities that children engage in, across demographic groups.
