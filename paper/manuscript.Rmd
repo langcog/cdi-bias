@@ -125,7 +125,7 @@ CDIs have shown good predictive validity [e.g., @fenson1994; @bornstein2012stabi
 Our primary focus is the vocabulary checklist portion of the CDI Words & Sentences (CDI:WS) form, comprised of 680 early-learned words across 22 categories (e.g., animals, vehicles, action words, pronouns) selected to assess the productive vocabulary of children 16 to 30 months of age.[^1]
 For each item on the CDI:WS, caregivers are asked to respond whether the target child has been heard to say (i.e. produce) the given item.
 Children's total vocabulary score on the CDI:WS is tightly correlated with other facets of early language (e.g., grammatical competence and gesture), suggesting that the language system is "tightly woven" [@frank2021].
-Due to these desirable properties, CDIs have been adapted to dozens of languages, and a central repository of CDI data contributed from all over the world has been created (Wordbank) [@frank2017; @frank2021].
+Due to these desirable properties, CDIs have been adapted to dozens of languages, and a central repository of CDI data contributed from all over the world has been created [Wordbank\; @frank2017].
 
 [^1]: The CDI: Words and Gestures form includes a subset of the CDI:WS items and targets children 12 to 18 months of age, measuring both comprehension and production.
 
@@ -142,7 +142,7 @@ But their use in this context poses a chicken and egg problem.
 While it is possible that there is an underlying difference in mean language ability (or vocabulary size) between demographic groups, CDIs could also have bias for or against particular groups based on the particular words they include, which different groups may have a varying amount of exposure to. 
 
 
-The idea that some items on a test may show bias, favoring one group over another, is known in psychometrics as Differential Item Function (DIF) [@holland1993differential].
+The idea that some items on a test may show bias, favoring one group over another, is known in psychometrics as Differential Item Function [DIF\; @holland1993differential].
 DIF can decrease the validity of a test, as the test may be overestimating the ability of test-takers in one group and underestimating the ability of another group -- not because of any underlying mean difference in ability between the groups, but simply because the test is unfair [@camilli2013ongoing].
 For example, if a vocabulary test is composed almost entirely of the names of farm equipment, the test will underestimate the knowledge of urban children, who have experience of other contexts, despite being less familiar with farm equipment than their rural peers.
 Of course, there may be a true ability difference between demographic groups, as is likely the case for the female language advantage, which has been documented in many languages [@eriksson2012differences; @frank2021]. 
